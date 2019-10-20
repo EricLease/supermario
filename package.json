@@ -1,0 +1,14 @@
+{
+  "name": "supermario-ecl",
+  "version": "0.1.0",
+  "description": "SuperMario Bros clone",
+  "main": "index.js",
+  "scripts": {
+    "start": "serve ./public"
+  },
+  "author": "Eric Lease",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^11.2.0"
+  }
+}
