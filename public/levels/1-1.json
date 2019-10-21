@@ -100,6 +100,7 @@
 
     "layers": [
         {
+            "description": "Base, solid sky and ground",
             "tiles": [
                 {
                     "name": "sky",
@@ -116,81 +117,21 @@
                         [0, 2048, 
                         13, 2]
                     ]
-                },
-                {
-                    "name": "sky",
-                    "type": "air",
-                    "ranges": [
-                        [20, 2,
-                        13, 2],
-                        [45, 5,
-                        13, 2]
-                    ]
                 }
             ]
         },
-        {
-            "tiles": [
-                {
-                    "name": "ground",
-                    "type": "solid",
-                    "ranges": [
-                        [5, 3, 10],
-                        [3, 5, 2],
-                        [12, 1, 10, 2]
-                    ]
-                },
-                
-                {
-                    "name": "smoothbrick",
-                    "type": "solid",
-                    "ranges": [
-                        [45, 15, 9],
-                        [46, 14, 8],
-                        [47, 13, 7],
-                        [48, 12, 6]
-                    ]
-                },
-                {
-                    "name": "brick",
-                    "type": "solid",
-                    "ranges": [
-                        [49, 11, 5],
-                        [50, 10, 4],
-                        [51, 9, 3],
-                        [52, 8, 2]
-                    ]
-                },
-                
-                {
-                    "name": "chance",
-                    "type": "solid",
-                    "ranges": [
-                        [3, 4],
-                        [8, 8],
-                        [20, 8],
-                        [65, 7],
-                        [60, 5]
-                    ]
-                },
 
-                {
-                    "pattern": "pipe-2h",
-                    "ranges": [
-                        [15, 11]
-                    ]
-                },
-                {
-                    "pattern": "pipe-3h",
-                    "ranges": [
-                        [1, 10],
-                        [75, 10],
-                        [125, 10]
-                    ]
-                }
-            ]
+        {
+            "description": "Base exceptions, i.e. sky overlaying ground to create holes",
+            "tiles": []
+        },
+        
+        {
+            "description": "Interactive layer, pipes, bricks, etc.",
+            "tiles": []
         },
         {
+            "description": "Front layer, non-interactive, ie. clouds",
             "tiles": [
                 { 
                     "pattern": "cloud-single",
@@ -204,7 +145,7 @@
                         [74, 3],
                         [80, 3],
                         [90, 2],
-                        [108, 3], 
+                        [108, 3],
                         [118, 2],
                         [128, 3],
                         [138, 2]
