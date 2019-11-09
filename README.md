@@ -38,6 +38,14 @@ You will see it is being served at `localhost:5000` by default.
 
 &nbsp;
 
+## Take note
+* If the `imageUrl` value in a sprite sheet `.json` file is a path, it will be treted as an app root relative path on the server.
+* Creating a new sprite sheet with `sprite-tool` will embed the image's base64 data in the `.json` file.
+* If a sprite sheet was loaded into `sprite-tool` with a path `imageUrl`, the path will be preseved on export.  Likewise, embedded data will be preserved.
+* Export functionality is currently restricted to downloading the file to your browser's downloads folder, and possibly changing the name (e.g. appending '(1)').  Sprite sheets created with the tool must be moved, and possibly renamed before they can be used with the engine.
+
+&nbsp;
+
 # TODO:
 ### (Scheduled for v0.5.0)
 
@@ -61,7 +69,10 @@ You will see it is being served at `localhost:5000` by default.
 
 5. Prevent removal/renaming of sprites that are part of an animation in the current `SpriteSheet`.
 
-6. Replace all js `alert()` and `confirm()` with instances of `Modal`
+6. Replace all js `alert()` and `confirm()` with instances of `Modal`.
+
+7. Implement `ExportAs`
+    * either add a button that opens a modal allowing user to change the file name (no change required for the sheet dirty indicator), or allow the filename to be editable on `SheetDetails` (requires sheet dirty indicator to be moved to the `SheetEditor` level)
 
 &nbsp;
 
