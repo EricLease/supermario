@@ -98,7 +98,6 @@ export default class SpriteSheet {
             const frames = [];
             const tiles = [];
 
-            debugger;
             for (const [name, { isFrame, x, y, width, height }] of this.tileMetas.entries()) {
                 if (isFrame) {
                     frames.push({ name: name, rect: [x, y, width, height] });
