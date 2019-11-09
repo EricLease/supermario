@@ -3,16 +3,23 @@ export default class Timer {
         let accumulatedTime = 0;
         let lastTime = 0;
         
+        this.started = false;
         this.updateProxy = (time) => {
-            accumulatedTime += (time - lastTime) / 1000;
+            this.started = true;
 
-            while(accumulatedTime > deltaTime) {
-                this.update(deltaTime);
-                accumulatedTime -= deltaTime;
+            if (this.paused) {
+                lastTime = time;
+            } else {
+                accumulatedTime += (time - lastTime) / 1000;
+
+                while(accumulatedTime > deltaTime) {
+                    this.update(deltaTime);
+                    accumulatedTime -= deltaTime;
+                }
+                
+                lastTime = time;
             }
             
-            lastTime = time;
-
             this.enqueue();
         }
     }
@@ -21,5 +28,7 @@ export default class Timer {
         requestAnimationFrame(this.updateProxy);
     }
 
-    start() { this.enqueue(); }
+    start() { if (!this.started) this.enqueue(); }
+    pause() { this.paused = true; }
+    resume() { this.paused = false; this.start(); }
 }

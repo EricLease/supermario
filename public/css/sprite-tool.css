@@ -1,0 +1,118 @@
+html {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    padding: 10px 10px 0 10px;
+}
+
+@media (min-width: 1200px) {
+    .container {
+        width: 1000px;
+    }
+}
+
+@media (max-width: 767px) {
+    div.workbench {
+        margin-top: 20px;
+    }
+}
+
+input.file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.row {
+    margin-bottom: 10px;
+}
+
+div.input-group,
+li.tile-detail {
+    max-width: 300px;
+}
+
+li.tile-detail {
+    min-width: 300px;
+}
+
+.col.compact {
+    flex-grow: 0;
+}
+
+ul.edit-list {
+    padding-left: 0;
+    margin-bottom: 0;
+    width: 100%;
+    display: table;
+    table-layout: fixed;
+}
+
+ul.edit-list li {
+    padding-left: 20px;
+    cursor: pointer;
+    display: table-row;
+    width: auto;
+}
+
+ul.edit-list li div.row {
+    padding-top: 10px;
+    margin-bottom: 0;
+}
+
+div.accordion div.card-body {
+    overflow-y: auto;
+}
+
+ul.edit-list li:hover {
+    background-color: #ffc107;
+}
+
+ul.edit-list li.selected {
+    background-color: rgb(0, 123, 255);
+}
+
+ul.edit-list li.selected:hover {
+    background-color: rgb(40, 167, 69);
+}
+
+div.save-cancel button.btn {
+    min-width: 75px;
+}
+
+div.accordion button.btn {
+    min-width: 135px;
+}
+
+canvas.zoom:hover {
+    position: relative;
+    z-index: 1000;
+    transform: scale(4);
+}
+
+canvas.zoom {
+    transition: all 0.5s ease-in-out;
+}
+
+ul.included {
+    border: solid 1px #ccc;
+    padding: 10px 15px;
+    max-width: 300px;
+    margin: auto;
+}
+
+li[draggable] {
+    cursor: grab;
+}
+
+div.card.single {
+    /* Override conflict between first item and last item selectors
+       when an accordion card is the only item in the accordion.  */
+    border-bottom: solid 1px rgba(0, 0, 0, 0.125) !important;
+    border-radius: 4px !important;
+}

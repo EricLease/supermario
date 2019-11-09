@@ -3,8 +3,12 @@ import { loadJSON } from './json.js';
 import { loadImage } from './image.js';
 import { createAnimation } from '../animation.js';
 
-export async function loadSpriteSheet(name) {
-    const sheetSpec = await loadJSON(`/sprites/${name}.json`);
+export async function loadSpriteSheet(name, addFileExt = true) {
+    return await loadSpriteSheetFromSheetSpec(
+        await loadJSON(`/sprites/${name}${(addFileExt ? '.json' : '')}`));
+}
+
+export async function loadSpriteSheetFromSheetSpec(sheetSpec) {
     const image = await loadImage(sheetSpec.imageUrl);
     const sprites = new SpriteSheet(image, sheetSpec.tileW, sheetSpec.tileH);
 
@@ -16,14 +20,14 @@ export async function loadSpriteSheet(name) {
 
     if (sheetSpec.frames) {
         sheetSpec.frames.forEach(frameSpec => {
-            sprites.define(frameSpec.name, ...frameSpec.rect);
+            sprites.define(frameSpec.name, true, ...frameSpec.rect);
         });
     }
 
     if (sheetSpec.animations) {
         sheetSpec.animations.forEach(animSpec => {
             const animation = createAnimation(animSpec.frames, animSpec.frameLen);
-            sprites.defineAnimation(animSpec.name, animation);
+            sprites.defineAnimation(animSpec.name, animation, animSpec.frames, animSpec.frameLen);
         });
     }
 

@@ -27,7 +27,7 @@ export async function loadFont() {
         const x = index * size % rowLen;
         const y = Math.floor(index * size / rowLen) * size;
 
-        sprites.define(char, x, y, size, size);
+        sprites.define(char, false, x, y, size, size);
     }
 
     return new Font(sprites, size);
