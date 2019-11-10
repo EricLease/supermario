@@ -3,9 +3,11 @@ import {
     getDivWithClasses, 
     getButtonWithClasses, 
     getElementWithClasses, 
-    bsHide, bsShow } from './dom-utilities.js';
+    bsHide, bsShow, removeChildren } from './dom-utilities.js';
 
 const ModalEvents = ['opened', 'closed'];
+const DefaultOkButtonClass = 'btn-outline-success';
+const DefaultCancelButtonClass = 'btn-outline-warning';
 
 const ifDef = (val, defaultVal) => 
     typeof val === 'undefined' || val === null ? defaultVal : val;
@@ -43,12 +45,14 @@ function setOptions(options, fallback) {
             btnOk: {
                 show: ifDef(options.footer.btnOk.show, ifDef(fallback.footer.btnOk.show, true)),
                 text: ifDef(options.footer.btnOk.text, ifDef(fallback.footer.btnOk.text, 'Ok')),
-                cb: ifDef(options.footer.btnOk.cb, ifDef(fallback.footer.btnOk.cb, () => {}))
+                cb: ifDef(options.footer.btnOk.cb, ifDef(fallback.footer.btnOk.cb, () => {})),
+                class: ifDef(options.footer.btnOk.class, ifDef(fallback.footer.btnOk.class, DefaultOkButtonClass))
             },
             btnCancel: {
                 show: ifDef(options.footer.btnCancel.show, ifDef(fallback.footer.btnCancel.show, false)),
                 text: ifDef(options.footer.btnCancel.text, ifDef(fallback.footer.btnCancel.text, 'Cancel')),
-                cb: ifDef(options.footer.btnCancel.cb, ifDef(fallback.footer.btnCancel.cb, () => {}))
+                cb: ifDef(options.footer.btnCancel.cb, ifDef(fallback.footer.btnCancel.cb, () => {})),
+                class: ifDef(options.footer.btnCancel.class, ifDef(fallback.footer.btnCancel.class, DefaultCancelButtonClass))
             }
         },
 
@@ -107,7 +111,14 @@ export default class Modal extends eControl {
         }
 
         if (this.options.body.show) {
-            this.body.innerHTML = this.options.body.content;
+            removeChildren(this.body);
+
+            if (this.options.body.content instanceof Element) {
+                this.body.appendChild(this.options.body.content);
+            } else {
+                this.body.innerHTML = this.options.body.content;
+            }
+
             bsShow(this.body);
         } else {
             bsHide(this.body);
@@ -120,6 +131,12 @@ export default class Modal extends eControl {
                 const id = this.btnOk.dataset.ignoreId;
 
                 if (id) this.ignoreEvent(id);
+
+                if (this.options.footer.btnOk.class !== this.btnOkClass) {
+                    this.btnOk.classList.remove(this.btnOkClass);
+                    this.btnOkClass = this.options.footer.btnOk.class;
+                    this.btnOk.classList.add(this.btnOkClass);
+                }
 
                 this.btnOk.dataset.ignoreId = this.listenTo(
                     this.btnOk, 'click', this.options.footer.btnOk.cb);
@@ -134,6 +151,12 @@ export default class Modal extends eControl {
                 const id = this.btnCancel.dataset.ignoreId;
 
                 if (id) this.ignoreEvent(id);
+
+                if (this.options.footer.btnCancel.class !== this.btnCancelClass) {
+                    this.btnCancel.classList.remove(this.btnCancelClass);
+                    this.btnCancelClass = this.options.footer.btnCancel.class;
+                    this.btnCancel.classList.add(this.btnCancelClass);
+                }
 
                 this.btnCancel.dataset.ignoreId = this.listenTo(
                     this.btnCancel, 'click', this.options.footer.btnCancel.cb);
@@ -189,7 +212,6 @@ export default class Modal extends eControl {
             this.title = getElementWithClasses('h5', 'modal-title');
             this.header.appendChild(this.title);
             this.btnDismiss = getButtonWithClasses(null, 'close');
-            this.btnDismiss.type = 'button';
             span.innerHTML = '&times;';
             this.btnDismiss.appendChild(span);
             this.header.appendChild(this.btnDismiss);
@@ -200,9 +222,11 @@ export default class Modal extends eControl {
             this.body = getDivWithClasses('modal-body');
         const buildModalFooter = () => {
             this.footer = getDivWithClasses('modal-footer');
-            this.btnOk = getButtonWithClasses('OK', 'btn', 'btn-outline-success');
+            this.btnOkClass = DefaultOkButtonClass;
+            this.btnOk = getButtonWithClasses('OK', 'btn', this.btnOkClass);
             this.footer.appendChild(this.btnOk);
-            this.btnCancel = getButtonWithClasses('Cancel', 'btn', 'btn-outline-warning');
+            this.btnCancelClass = DefaultCancelButtonClass;
+            this.btnCancel = getButtonWithClasses('Cancel', 'btn', this.btnCancelClass);
             this.footer.appendChild(this.btnCancel);
 
             return this.footer;

@@ -1,4 +1,5 @@
 import eControl from './e-control.js';
+import Modal from './modal.js';
 import { 
     buildStaticLists, 
     buildAnimationList, 
@@ -6,10 +7,11 @@ import {
     buildEditPanelListContainerClass, 
     buildEditPanelCollapseButtonContent } from './builders.js';
 import { ItemType, getItemTypeName } from './item-type.js';
-import { findParent, getDivWithClasses } from './dom-utilities.js';
+import { findParent, getDivWithClasses, getNodeIndex } from './dom-utilities.js';
 import { guid } from './guid.js';
+import { getDataTransferData } from './drag-and-drop-utilities.js';
 
-const SpriteListEvents = ['add', 'click', 'change'];
+const SpriteListEvents = ['add', 'remove', 'click', 'change'];
 
 function findListItem(elem) {
     for (; elem && elem !== document; elem = elem.parentNode ) {
@@ -22,53 +24,56 @@ function findListItem(elem) {
     return null;
 }
 
-async function itemClick(evt) {
-    const li = findListItem(evt.target);
-
-    if (!li) {
-        console.error('Could not find <li> associated with edit panel item');
-
-        return;
-    }
-
-    const itemType = parseInt(li.dataset.itemType);
+function raiseClick(itemName, itemType) {
     let cancel = false;
     
     this.listeners.get('click').forEach(cb => { 
         let evt = { 
             cancel: false,
-            itemName: li.dataset.itemName,
+            itemName: itemName,
             itemType: itemType
         }; 
         cb(evt); 
         cancel = evt.cancel || cancel; 
     });
 
-    if (cancel) return;
+    return cancel;
+}
 
-    const prev = document.querySelector('li.selected');
+async function raiseChange(itemName, itemType) {
+    let cancel = false;
+
+    const promises = [];
+
+    this.listeners.get('change').forEach(cb => {
+        promises.push((async () => {
+            const evt = { 
+                cancel: false,
+                itemName: itemName, 
+                itemType: itemType 
+            }; 
+
+            await cb(evt); 
+            cancel = evt.cancel || cancel; 
+        })());
+    });
+
+    await Promise.all(promises);
+
+    return cancel;
+}
+
+async function itemClick(evt) {
+    const li = findListItem(evt.target);
+    const itemType = parseInt(li.dataset.itemType);
+    const itemName = li.dataset.itemName;
+
+    if (raiseClick.call(this, itemName, itemType)) return;
+
+    const prev = this.container.querySelector('li.selected');
     
     if (prev !== li) {
-        cancel = false;
-
-        const promises = [];
-
-        this.listeners.get('change').forEach(cb => {
-            promises.push((async () => {
-                const evt = { 
-                    cancel: false,
-                    itemName: li.dataset.itemName, 
-                    itemType: itemType 
-                }; 
-    
-                await cb(evt); 
-                cancel = evt.cancel || cancel; 
-            })());
-        });
-
-        await Promise.all(promises);
-
-        if (cancel) return;
+        if (await raiseChange.call(this, itemName, itemType)) return;
 
         if (prev) prev.classList.remove('selected');
 
@@ -76,13 +81,128 @@ async function itemClick(evt) {
     }
 }
 
+function move(orig, tgt) {
+    const origIdx = getNodeIndex(orig);
+    const targetIdx = getNodeIndex(tgt);
+
+    if (origIdx === targetIdx) return;
+
+    if (targetIdx > origIdx) {        
+        tgt.parentNode.insertBefore(orig, tgt.nextSibling);
+    } else {
+        orig.parentNode.insertBefore(orig, tgt);
+    }
+
+    const set = parseInt(orig.dataset.itemType) === ItemType.Animation
+        ? 'animations' : 'tiles';
+    const metaSet = `${set.substr(0, set.length - 1)}Metas`;
+    const entries = [...this.sprites[set].entries()];
+    const metaEntries = [...this.sprites[metaSet].entries()];
+    
+    entries.splice(targetIdx, 0, ...entries.splice(origIdx, 1));
+    metaEntries.splice(targetIdx, 0, ...metaEntries.splice(origIdx, 1));
+    this.sprites[set] = new Map(entries);
+    this.sprites[metaSet] = new Map(metaEntries);    
+    this.state.sheetDirty = true;
+}
+
+async function remove(orig) {
+    const confirmation = async () => {
+        return new Promise(resolve => {
+            const dismissCb = () => cb(true);
+            const cb = (cancel = false) => {
+                this.modal.dismiss();
+                resolve(cancel);
+            };
+
+            this.modal.show({
+                dismiss: dismissCb,
+                header: { show: false },
+                body: { content: 'Are you sure you want to delete this sprite?' },
+                footer: {
+                    btnOk: {  
+                        cb: () => cb(),
+                        text: 'Delete',
+                        class: 'btn-outline-danger'
+                    },
+                    btnCancel: { show: true, cb: dismissCb } 
+                }
+            });
+        });
+    };
+    const promises = [];
+    let cancel = false;
+    
+    this.listeners.get('remove').forEach(cb => {
+        promises.push((async () => {
+            const evt = { 
+                cancel: false,
+                itemName: orig.dataset.itemName, 
+                itemType: orig.dataset.itemType 
+            }; 
+
+            await cb(evt); 
+            cancel = evt.cancel || cancel; 
+        })());
+    });
+
+    await Promise.all(promises);
+
+    if (cancel) return;
+
+    const prev = this.container.querySelector('li.selected');
+
+    if (await confirmation()) return;
+
+    if (prev && parseInt(prev.dataset.itemType) === ItemType.Animation &&
+        parseInt(orig.dataset.itemType) !== ItemType.Animation) {
+        // Reset animation palette
+        raiseChange.call(this, prev.dataset.itemName, parseInt(prev.dataset.itemType));
+    }
+
+    const set = parseInt(orig.dataset.itemType) === ItemType.Animation
+        ? 'animations' : 'tiles';
+    const metaSet = `${set.substr(0, set.length - 1)}Metas`;
+    const entries = [...this.sprites[set].entries()];
+    const metaEntries = [...this.sprites[metaSet].entries()];
+    const origIdx = getNodeIndex(orig); 
+
+    entries.splice(origIdx, 1);
+    metaEntries.splice(origIdx, 1);
+    this.sprites[set] = new Map(entries);
+    this.sprites[metaSet] = new Map(metaEntries);
+    this.ignoreEvent(orig.dataset.dragId);
+    this.ignoreEvent(orig.dataset.dropId);
+    this.ignoreEvent(orig.dataset.dragOverId);
+    orig.remove();
+    this.state.sheetDirty = true;
+}
+
+async function drop(evt) {
+    const data = getDataTransferData(evt);
+
+    if (data.contextId !== this.uniqueId) return false;
+
+    const orig = document.querySelector(`[data-drag-id="${data.dragId}"]`);
+    const tgt = evt.currentTarget;
+
+    if (tgt.matches && tgt.matches('li')) move.call(this, orig, tgt);
+    else await remove.call(this, orig);
+
+    evt.preventDefault();    
+    evt.stopPropagation();
+
+    return false;
+}
+
 export default class SpriteList extends eControl {
     constructor(state, sprites) {
         super(SpriteListEvents);
 
+        this.uniqueId = guid();
         this.state = state;
         this.sprites = sprites;
-        this.ignore.push('sprites');
+        this.ignore.push('uniqueId', 'sprites');
     }
 
     update(evt) {
@@ -97,7 +217,7 @@ export default class SpriteList extends eControl {
                 break;
                 
             case ItemType.Animation:
-                list = buildAnimationList(this.sprites);
+                this.animationList = list = buildAnimationList(this.sprites);
                 break;
 
             default: 
@@ -144,16 +264,6 @@ export default class SpriteList extends eControl {
     }
 
     build() {
-        const setEditPanelMaxHeight = () => {
-            setTimeout(() => { 
-                let diff = this.container.getBoundingClientRect().top + 19;
-        
-                document.querySelectorAll('.card-header')
-                    .forEach(h => diff += h.clientHeight);
-                document.querySelectorAll('.card-body')
-                    .forEach(b => b.style.maxHeight = `calc(100vh - ${diff}px)`);
-            });
-        };
         const clickCb = (evt) => itemClick.call(this, evt);
         const addCb = (evt) => {
             let cancel = false;
@@ -176,9 +286,8 @@ export default class SpriteList extends eControl {
             prev.classList.remove('selected');
         }
         const [tiles, frames] = buildStaticLists(this.sprites);
-        const animations = buildAnimationList(this.sprites);
-
-        this.containerClass = `_${guid()}`;
+        
+        this.containerClass = `_${this.uniqueId}`;
         this.container = getDivWithClasses('accordion', this.containerClass);
 
         const staticOpts = { 
@@ -186,7 +295,11 @@ export default class SpriteList extends eControl {
             clickCb: clickCb,
             addCb: addCb, 
             expand: true, 
-            setMaxHeight: false 
+            setMaxHeight: false,
+            enableDrag: true,
+            contextId: this.uniqueId,
+            enableDrop: true,                
+            dropCb: async (evt) => await drop.call(this, evt)
         };
 
         if (this.sprites.width && this.sprites.height) {
@@ -195,13 +308,27 @@ export default class SpriteList extends eControl {
             buildEditPanel(this, frames, ItemType.Frame, staticOpts);
         }
         
-        buildEditPanel(this, animations, ItemType.Animation, { 
+        this.animationList = buildAnimationList(this.sprites);
+        buildEditPanel(this, this.animationList, ItemType.Animation, { 
             containerClass: this.containerClass, 
             clickCb: clickCb, 
-            addCb: addCb 
+            addCb: addCb,
+            enableDrag: true,
+            contextId: this.uniqueId,
+            enableDrop: true,                
+            dropCb: async (evt) => await drop.call(this, evt)
         });
-        animations.forEach(a => a.start());
-        setEditPanelMaxHeight();
+        this.listenTo(window, 'drop', async (evt) => await drop.call(this, evt));
+        this.animationList.forEach(a => a.start());
+        this.modal = new Modal();
         this.built = true;
+    }
+
+    dispose() {
+        if (this.animationList) {
+            this.animationList.forEach(a => a.stop());
+        }
+
+        eControl.prototype.dispose.call(this);
     }
 }

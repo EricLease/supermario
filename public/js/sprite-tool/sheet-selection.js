@@ -9,7 +9,8 @@ import {
     getButtonWithClasses, 
     getElementWithClasses, 
     getNumberInput,
-    getInputWithClasses} from './dom-utilities.js';
+    getInputWithClasses,
+    findParent } from './dom-utilities.js';
 import { capitalize } from './string-utilities.js';
 import { ItemType } from './item-type.js';
 
@@ -52,16 +53,11 @@ function resetCreate() {
 }    
 
 export default class SheetSelection extends eControl {
-    constructor(parent) { 
+    constructor() { 
         super(SheetSelectionEvents); 
 
-        this.parent = parent;
         this.currentFileName = null;
-        this.ignore.push('parent');
     }
-
-    show() { eControl.prototype.attach.call(this, this.parent); }
-    hide() { eControl.prototype.detach.call(this); }
 
     build() {
         const buildButtonPanel = () => {
@@ -69,17 +65,18 @@ export default class SheetSelection extends eControl {
                 const createOrOpen = (e) => {
                     // TODO: This is basically c/p to create's "tiles or frames"
                     // -> refactor into a rb group builder, add to builders.js
-                    const target = e.target.matches('input[type="radio"]')
+                    const rb = e.target.matches('input[type="radio"]')
                         ? e.target : e.target.firstElementChild;
+                    const label = findParent(rb, 'label');
                 
                     // Label click happens prior to radio state change
                     // so if it's already selected, do nothing
-                    if (e.target.matches('.active')) return;
+                    if (label.matches('.active')) return;
                     // should be (but this doesn't work initially for some reason):
                     //if (target.checked) return;
                 
-                    if (target.dataset.create === 'true') resetOpen.call(this);
-                    else if (target.dataset.open === 'true') resetCreate.call(this);
+                    if (rb.dataset.create === 'true') resetOpen.call(this);
+                    else if (rb.dataset.open === 'true') resetCreate.call(this);
                 };
                 const label = getElementWithClasses('label', 'btn', 'btn-primary', 'btn-link', 'text-light');
                     
@@ -204,18 +201,18 @@ export default class SheetSelection extends eControl {
                         removeChildren(ulAnim);
                         
                         const [tiles, frames] = buildStaticLists(this.sprites);
-                        const animations = buildAnimationList(this.sprites);
-                        
+
                         tiles.forEach(li => ulTiles.appendChild(li));
-                        frames.forEach(li => ulFrames.appendChild(li));
-                        animations.forEach(obj => {
+                        frames.forEach(li => ulFrames.appendChild(li));                        
+                        this.previewAnimations =  buildAnimationList(this.sprites);
+                        this.previewAnimations.forEach(obj => {
                             ulAnim.appendChild(obj.li);
                             obj.start();
                         });
                     
                         tiles.length ? bsShow(tilesPreview.col) : bsHide(tilesPreview.col);
-                        frames.length ? bsShow(framesPreview.col) : bsHide(framesPreview.col);
-                        animations.length ? bsShow(animPreview.col) : bsHide(animPreview.col);
+                        frames.length ? bsShow(framesPreview.col) : bsHide(framesPreview.col);                        
+                        this.previewAnimations.length ? bsShow(animPreview.col) : bsHide(animPreview.col);
                     };
                     const loadlist = extractFiles(evt, /application\/json/);
                 
@@ -407,5 +404,13 @@ export default class SheetSelection extends eControl {
         this.container.appendChild(buildCreateDetailsPanel());
         this.container.appendChild(buildOpenPreviewPanel());
         this.built = true;
+    }
+
+    dispose() {
+        if (this.previewAnimations) {
+            this.previewAnimations.forEach(a => a.stop());
+        }
+
+        eControl.prototype.dispose.call(this);
     }
 }

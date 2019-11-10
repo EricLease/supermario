@@ -2,6 +2,7 @@ import Timer from '../engine/timer.js';
 import { ItemType, getItemTypeName } from './item-type.js';
 import { getDivWithClasses, getButtonWithClasses, getElementWithClasses } from './dom-utilities.js';
 import { guid } from './guid.js';
+import { setDataTransferData } from './drag-and-drop-utilities.js';
 
 export function buildStaticListItem(tileMeta, sprites, scale = 1) {
     const li = getElementWithClasses('li', 'tile-detail', 'text-truncate');            
@@ -83,7 +84,8 @@ export function buildAnimationListItem(animationMeta, sprites, scale = 1) {
         
     return {
         li: li,
-        start: () => { timer.start(); }
+        start: () => { timer.start(); },
+        stop: () => { timer.pause(); }
     };
 }
 
@@ -125,6 +127,7 @@ export function buildEditPanel(eControl, list, itemType, opts) {
     if (typeof opts.containerClass === 'undefined') opts.containerClass = `_${guid()}`;
     if (typeof opts.setMaxHeight === 'undefined') opts.setMaxHeight = true;
     if (typeof opts.collapsible === 'undefined') opts.collapsible = true;
+    if (typeof opts.contextId === 'undefined') opts.contextId = opts.containerClass;
 
     const panel = getDivWithClasses('card');
     const header = getDivWithClasses('mb-0', 'card-header');
@@ -183,7 +186,10 @@ export function buildEditPanel(eControl, list, itemType, opts) {
                 el, 'dragstart', 
                 (evt) => {
                     evt.dataTransfer.clearData();
-                    evt.dataTransfer.setData('text', evt.target.dataset.dragId);
+                    setDataTransferData(
+                        evt, 
+                        evt.target.dataset.dragId, 
+                        opts.contextId);
                 });
         }
 

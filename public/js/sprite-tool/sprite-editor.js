@@ -71,13 +71,13 @@ export default class SpriteEditor extends eControl {
                         }
                     });
                 });
-            }
+            };
             const edit = async (evt) => {
                 if (await dirtyCheck(evt)) return;
 
                 let tgtWkb;
 
-                switch(evt.itemType) {
+                switch (evt.itemType) {
                     case ItemType.Tile:
                     case ItemType.Frame: tgtWkb = this.staticWorkbenchIndex; break;
                     case ItemType.Animation: tgtWkb = this.animationWorkbenchIndex; break;
@@ -85,13 +85,17 @@ export default class SpriteEditor extends eControl {
                         throw new Error(`Invalid ItemType (${evt.itemType}) on list event`);
                 }
 
-                if(tgtWkb != this.activeWorkbench) {
+                if (tgtWkb != this.activeWorkbench) {
                     swapWorkbenches(
                         this.workbenches[this.activeWorkbench], 
                         this.workbenches[tgtWkb]);
                     this.activeWorkbench = tgtWkb;
                 }
 
+                this.currentSprite = { 
+                    itemName: evt.itemName, 
+                    itemType: evt.itemType 
+                };                
                 this.workbenches[this.activeWorkbench].reset(evt);
             };
             const add = async (evt) => {
@@ -110,9 +114,70 @@ export default class SpriteEditor extends eControl {
                 
                 if (!evt.cancel) this.state.spriteDirty = true;
             };
+            const remove = async (evt) => {
+                const reject = async (content) => {
+                    return new Promise(resolve => {
+                        const cb = () => {
+                            this.modal.dismiss();
+                            resolve(evt.cancel = true);
+                        };
+    
+                        this.modal.show({
+                            dismiss: () => cb(),
+                            header: { show: false },
+                            body: { content: content },
+                            footer: {
+                                btnOk: {  
+                                    cb: () => cb(),
+                                    class: 'btn-outline-primary'
+                                }
+                            }
+                        });
+                    });
+                };
+
+                if (evt.itemType !== ItemType.Animation) {
+                    const contains = [...this.sprites.animationMetas.entries()]
+                        .filter(([_, meta]) => meta.frames.indexOf(evt.itemName) > -1)
+                        .reduce((prev, curr) => {
+                                const li = document.createElement('li');
+
+                                li.innerText = curr[0];
+                                prev.appendChild(li);
+                                
+                                return prev;
+                            }, document.createElement('ul'));
+
+                    if (contains.firstChild) {
+                        const content = document.createElement('div');
+                        const msg = document.createElement('span');
+
+                        msg.innerText = 'Cannot delete the sprite. It is used by the following animations:';
+                        content.appendChild(msg);
+                        content.appendChild(contains);
+
+                        await reject(content)
+                        return;
+                    }
+                } 
+                
+                if (this.currentSprite && 
+                    this.currentSprite.itemType === ItemType.Animation &&
+                    this.state.spriteDirty) {
+                    await reject('Cannot delete the sprite while an animation is being edited');
+                    return;
+                }
+                
+                // if (this.currentSprite.itemName === evt.itemName &&
+                //     this.currentSprite.itemType === evt.itemType &&
+                //     this.state.spriteDirty) {
+                //     await reject('Cannot delete the sprite while it is being edited');
+                // }
+            };
             
             this.list = new SpriteList(this.state, this.sprites);
             this.list.addEventListener('add', async (evt) => await add(evt));
+            this.list.addEventListener('remove', async (evt) => await remove(evt));
             this.list.addEventListener('change', async (evt) => await edit(evt));
             this.list.parent = buildCol('col-lg-5', 'col-xl-4');
             this.container.appendChild(this.list.parent);

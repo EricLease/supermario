@@ -4,16 +4,10 @@ import { buildEditPanel, buildStaticLists, buildStaticListItem } from './builder
 import { ItemType } from './item-type.js';
 import { guid } from './guid.js';
 import { getAnimationMetaOrDefault } from './sprite-utilities.js';
+import { setDataTransferData, getDataTransferData } from './drag-and-drop-utilities.js';
+import { getNodeIndex } from './dom-utilities.js';
 
 const FramesetEditorEvents = ['change'];
-
-function getNodeIndex(el) { 
-    const children = el.parentNode.children;
-     
-    for (let idx = 0; idx < children.length; idx++) {
-        if (children[idx] === el)  return idx;
-    }
-}
 
 function move(orig, tgt) {
     const origIdx = getNodeIndex(orig);
@@ -50,7 +44,7 @@ function add(orig, tgt) {
         li, 'dragstart', 
         (evt) => {
             evt.dataTransfer.clearData();
-            evt.dataTransfer.setData('text', li.dataset.dragId);
+            setDataTransferData(evt, li.dataset.dragId, this.uniqueId);
         });
     li.dataset.dropId = this.listenTo(li, 'drop', (evt) => drop.call(this, evt));
     li.dataset.dragOverId = this.listenTo(li, 'dragover', (evt) => evt.preventDefault());
@@ -67,8 +61,11 @@ function add(orig, tgt) {
 }
 
 function drop(evt) {
-    const orig = document.querySelector(
-        `[data-drag-id="${evt.dataTransfer.getData('text')}"]`);
+    const data = getDataTransferData(evt);
+
+    if (data.contextId !== this.uniqueId) return false;
+
+    const orig = document.querySelector(`[data-drag-id="${data.dragId}"]`);
     const tgt = evt.currentTarget;
     const included = orig.dataset.included === this.uniqueId;
     
@@ -109,12 +106,13 @@ export default class FramesetEditor extends eControl {
                 .map(li => { li.dataset.included = this.uniqueId; return li; });
             const opts = { 
                 container: this.included, 
-                containerClass: this.includedContainerClass, 
+                containerClass: this.includedClass, 
                 expand: true, 
                 collapsible: false,
                 enableAdd: false, 
                 enableClick: false, 
                 enableDrag: true,
+                contextId: this.uniqueId,
                 enableDrop: true,                
                 dropCb: (evt) => drop.call(this, evt),
                 label: 'Playlist'
@@ -128,12 +126,13 @@ export default class FramesetEditor extends eControl {
             const [tiles, frames] = buildStaticLists(this.sprites);
             const opts = { 
                 container: this.palette, 
-                containerClass: this.paletteContainerClass, 
+                containerClass: this.paletteClass, 
                 expand: true, 
                 collapsible: false,
                 enableAdd: false, 
                 enableClick: false, 
                 enableDrag: true,
+                contextId: this.uniqueId,
                 label: 'Palette'
             };
 
@@ -156,23 +155,6 @@ export default class FramesetEditor extends eControl {
             col.appendChild(this[type]);
             this.container.appendChild(col);
         };
-        // const initIncluded = () => {
-        //     const col = getDivWithClasses(...colClasses);
-            
-        //     this.includedContainerClass = `_${this.uniqueId}_Included`;
-        //     this.included = getDivWithClasses('accordion', this.includedContainerClass);            
-        //     col.appendChild(this.included);
-        //     this.container.appendChild(col);
-        // };
-        // const initPalette = () => {
-        //     const col = getDivWithClasses(...colClasses);
-            
-        //     this.paletteContainerClass = `_${this.uniqueId}_Palette`;
-        //     this.palette = getDivWithClasses('accordion', this.paletteContainerClass);            
-        //     col.appendChild(this.palette);
-        //     this.container.appendChild(col);
-        // };
-        //const colClasses = ['col-6'];
         
         this.container = getDivWithClasses('row', 'mb-0', 'p-0');
         ['included', 'palette'].forEach(initList);

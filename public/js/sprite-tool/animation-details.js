@@ -1,5 +1,6 @@
 import eControl from './e-control.js';
 import Timer from '../engine/timer.js';
+import Modal from './modal.js';
 import { 
     getDivWithClasses, 
     getButtonWithClasses, 
@@ -86,26 +87,51 @@ export default class AnimationDetails extends eControl {
 
     build() {
         const buildSaveCancel = () => {
-            const save = (evt) => {
-                if (!this.state.spriteDirty) return;
+            const save = async (evt) => {
+                const valid = async () => {
+                    const reject = async (content) => {
+                        return new Promise(resolve => {
+                            const cb = () => {
+                                this.modal.dismiss();
+                                resolve(evt.cancel = true);
+                            };
+        
+                            this.modal.show({
+                                dismiss: () => cb(),
+                                header: { show: false },
+                                body: { content: content },
+                                footer: {
+                                    btnOk: {  
+                                        cb: () => cb(),
+                                        class: 'btn-outline-primary'
+                                    }
+                                }
+                            });
+                        });
+                    };
+    
+                    if (!this.state.spriteDirty) return;
+    
+                    const ctlNames = ['name', 'frameLen']
+                        .filter(c => !this[c].value)
+                        .map(capitalize);
+    
+                    if (!this.frames.length) ctlNames.push('Frameset');
+    
+                    if (!ctlNames.length) return true;
 
-                const ctlNames = ['name', 'frameLen']
-                    .filter(c => !this[c].value)
-                    .map(capitalize);
-
-                if (!this.frames.length) ctlNames.push('Frameset');
-
-                if (ctlNames.length) {
                     let msg = `${ctlNames.splice(-1, 1)} cannot be blank`;
 
-                    if(ctlNames.length) {
+                    if (ctlNames.length) {
                         msg = `${ctlNames.join(', ')}, and ${msg}`;
                     }
 
-                    alert(msg);
-                    evt.cancel = true;
-                    return;
-                }
+                    await reject(msg);
+
+                    return false;
+                };
+                
+                if (!await valid()) return;
 
                 if (this.name.value !== this.origName) {
                     if (this.sprites.animations.has(this.name.value) &&
@@ -149,7 +175,7 @@ export default class AnimationDetails extends eControl {
             this.btnSave = getButtonWithClasses('Save', 'btn', 'btn-outline-success');
             this.btnSave.setAttribute('disabled', true);
             this.btnSave.dataset.ignoreId = 
-                this.listenTo(this.btnSave, 'click', (evt) => save(evt));
+                this.listenTo(this.btnSave, 'click', async (evt) => await save(evt));
             saveCol.appendChild(this.btnSave);
             saveRow.appendChild(saveCol);
             col.appendChild(saveRow);
@@ -206,6 +232,7 @@ export default class AnimationDetails extends eControl {
         this.container.appendChild(buildName());
         this.container.appendChild(buildFrameLen());
         this.timer = new Timer(1/60);
+        this.modal = new Modal();
         this.built = true;
     }
 }

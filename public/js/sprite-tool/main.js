@@ -6,16 +6,16 @@ function main() {
         if (sheetEditor) {
             sheetEditor.dispose();
             sheetEditor = null;
-        } else {
-            sheetSelection = new SheetSelection('#tool');
-            sheetSelection.addEventListener('sheetselected', sheetSelected);
         }
-
-        sheetSelection.show();
+        
+        sheetSelection = new SheetSelection();
+        sheetSelection.addEventListener('sheetselected', sheetSelected, { once: true });
+        sheetSelection.attach('#tool');
     }
 
     function sheetSelected(e) {
-        sheetSelection.hide();
+        sheetSelection.dispose();
+        sheetSelection = null;
         sheetEditor = new SheetEditor(e.fileName, e.sprites, e.new);
         sheetEditor.attach('#tool');
         sheetEditor.addEventListener('done', selectSheet, { once: true });

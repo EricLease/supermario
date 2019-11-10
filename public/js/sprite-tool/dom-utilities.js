@@ -10,6 +10,14 @@ export function findParent(el, selector) {
     return null;
 }
 
+export function getNodeIndex(el) { 
+    const children = el.parentNode.children;
+     
+    for (let idx = 0; idx < children.length; idx++) {
+        if (children[idx] === el)  return idx;
+    }
+}
+
 export function getNumberInput(min, max, val, step, placeholder, onchange, disabled = true) {
     const input = getInputWithClasses('number', 'form-control');
     

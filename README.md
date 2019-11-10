@@ -51,11 +51,9 @@ You will see it is being served at `localhost:5000` by default.
 
 ## sprite-tool
 
-1. Implement `DeleteSprite`.
-    * drag/drop 
-        1. expand current drag/drop functionality, add `allowedDropzones` to data being transfered, and verify `tgt` is in `allowedDropzones`
-        2. in `SpriteList`, make `li`s draggable but only add `window` to their `allowedDropzones` list
-        3. pass `cb` in transfered data as well, triggered by `drop` handler on `allowedDropzones`
+1. (v0.4.1) ~~Implement drag-and-drop `DeleteSprite`.~~
+    * ~~add `contextId` to data being transfered~~
+    * ~~restrict `drop` event handlers to only act on data a valid `contextId` for the handler~~
 
 2. Allow `Save` of an existing sprite to create a new sprite when the name has changed, rather than changing the name of the existing sprite. **Still warn user if it would overwrite an existing sprite!**
 
@@ -73,6 +71,8 @@ You will see it is being served at `localhost:5000` by default.
 
 7. Implement `ExportAs`
     * either add a button that opens a modal allowing user to change the file name (no change required for the sheet dirty indicator), or allow the filename to be editable on `SheetDetails` (requires sheet dirty indicator to be moved to the `SheetEditor` level)
+
+8. Dropping a palette sprite on animation workbench's playlist should update the playlist's count.
 
 &nbsp;
 
