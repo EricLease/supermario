@@ -82,6 +82,20 @@ export default class StaticDetails extends eControl {
         this.state.spriteDirty = !this.sprites.tiles.has(this.origName);
     }
 
+    moveTo(pos)  {
+        this.x.value = pos.x;
+        this.y.value = pos.y;
+        updatePreview.call(this);
+    }
+
+    dragging(pos, dim) {
+        this.x.value = pos.x;
+        this.y.value = pos.y;
+        this.w.value = dim.x;
+        this.h.value = dim.y;
+        updatePreview.call(this);
+    }
+
     build() {
         const buildSaveCancel = () => {
             const save = async (evt) => {

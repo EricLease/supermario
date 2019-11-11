@@ -74,9 +74,9 @@ You will see it is being served at `localhost:5000` by default.
 
 8. Dropping a palette sprite on animation workbench's playlist should update the playlist's count.
 
-9. Mouse event handling on `SpriteIndicator`
-    * Tiles: click to select (mouse coords. converted to nearest tile index)
-    * Frames: click to set upper (x,y), or click and drag to set bounding box
+9. (v0.4.3) ~~Mouse event handling on `SpriteIndicator`~~
+    * ~~Tiles: click to select (mouse coords. converted to nearest tile index)~~
+    * ~~Frames: click to set upper (x,y), or click and drag to set bounding box~~
 
 &nbsp;
 
