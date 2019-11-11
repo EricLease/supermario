@@ -1,4 +1,5 @@
 import eControl from './e-control.js';
+import Modal from './modal.js';
 import SpriteSheet from '../engine/sprite-sheet.js';
 import { loadClientImage, loadClientSpriteSheet } from './loaders.js';
 import { buildStaticLists, buildAnimationList } from './builders.js';
@@ -112,29 +113,32 @@ export default class SheetSelection extends eControl {
         };
         const buildSelectionPanel = () => {
             const buildCreateSelection = () => {
-                const createSheet = () => {
-                    let ctlNames = ['newFilename'];
+                const createSheet = async () => {
+                    const valid = async () => {
+                        let ctlNames = ['newFilename'];
                     
-                    if (this.itemType === ItemType.Tile) {
-                        ctlNames.push('tileW', 'tileH');
-                    }
-                    
-                    ctlNames = ctlNames.filter(c => !this[c].value).map(capitalize);
+                        if (this.itemType === ItemType.Tile) {
+                            ctlNames.push('tileW', 'tileH');
+                        }
+                        
+                        ctlNames = ctlNames.filter(c => !this[c].value).map(capitalize);
 
-                    if (!this.currentAsset || !this.currentAsset.length) {
-                        ctlNames.push('Current Asset');
-                    }
-
-                    if (ctlNames.length) {
+                        if (!this.currentAsset || !this.currentAsset.length) {
+                            ctlNames.push('CurrentAsset');
+                        }
+        
+                        if (!ctlNames.length) return true;
+    
                         let msg = `${ctlNames.splice(-1, 1)} cannot be blank`;
-
-                        if(ctlNames.length) {
+    
+                        if (ctlNames.length) {
                             msg = `${ctlNames.join(', ')}, and ${msg}`;
                         }
+    
+                        return await this.modal.reject(msg);
+                    };
 
-                        alert(msg);
-                        return;
-                    }
+                    if (!await valid()) return;
 
                     let fileName = this.newFilename.value;
                     let w, h;
@@ -163,7 +167,7 @@ export default class SheetSelection extends eControl {
                 
                 const button = getButtonWithClasses('Create', 'btn', 'btn-outline-primary');
                 
-                this.listenTo(button, 'click', () => createSheet());
+                this.listenTo(button, 'click', async () => await createSheet());
                 
                 const append = getDivWithClasses('input-group-append');
                 
@@ -403,6 +407,7 @@ export default class SheetSelection extends eControl {
         this.container.appendChild(buildSelectionPanel());
         this.container.appendChild(buildCreateDetailsPanel());
         this.container.appendChild(buildOpenPreviewPanel());
+        this.modal = new Modal();
         this.built = true;
     }
 

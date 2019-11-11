@@ -1,4 +1,5 @@
 import eControl from './e-control.js';
+import Modal from './modal.js';
 import { ItemType, getItemTypeName } from './item-type.js';
 import { capitalize } from './string-utilities.js';
 import { 
@@ -83,7 +84,7 @@ export default class StaticDetails extends eControl {
 
     build() {
         const buildSaveCancel = () => {
-            const save = (evt) => {
+            const save = async (evt) => {
                 if (!this.state.spriteDirty) return;
                 
                 const ctlNames = ['name', 'x', 'y', 'w', 'h']
@@ -97,17 +98,22 @@ export default class StaticDetails extends eControl {
                         msg = `${ctlNames.join(', ')}, and ${msg}`;
                     }
 
-                    alert(msg);
-                    evt.cancel = true;
+                    await this.modal.reject(msg, evt);                    
                     return;
                 }
 
                 if (this.name.value !== this.origName) {
                     if (this.sprites.tiles.has(this.name.value) &&
-                        !confirm(`${getItemTypeName(this.currentType)} with the name "${this.name.value}" already exists.  Overwrite?`)) {
-                        evt.cancel = true;
-                        return;
-                    }
+                        !await this.modal.confirm(
+                            `${getItemTypeName(this.currentType)} with the name "${this.name.value}" already exists.  Overwrite?`,
+                            evt, {
+                                footer: {
+                                    btnOk: {
+                                        text: 'Overwrite',
+                                        class: 'btn-outline-warning'
+                                    }
+                                }
+                            })) return;
 
                     if (this.sprites.tiles.has(this.origName)) {
                         this.sprites.tiles.delete(this.origName);
@@ -146,7 +152,7 @@ export default class StaticDetails extends eControl {
             this.btnSave = getButtonWithClasses('Save', 'btn', 'btn-outline-success');
             this.btnSave.setAttribute('disabled', true);
             this.btnSave.dataset.ignoreId = 
-                this.listenTo(this.btnSave, 'click', (evt) => save(evt));
+                this.listenTo(this.btnSave, 'click', async (evt) => await save(evt));
             saveCol.appendChild(this.btnSave);
             saveRow.appendChild(saveCol);
             col.appendChild(saveRow);
@@ -259,6 +265,7 @@ export default class StaticDetails extends eControl {
         this.container.appendChild(buildName());
         this.container.appendChild(buildPos());
         this.container.appendChild(buildDim());
+        this.modal = new Modal();
         this.built = true;
     }
 }

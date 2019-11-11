@@ -67,12 +67,16 @@ You will see it is being served at `localhost:5000` by default.
 
 5. Prevent removal/renaming of sprites that are part of an animation in the current `SpriteSheet`.
 
-6. Replace all js `alert()` and `confirm()` with instances of `Modal`.
+6. (v0.4.2) ~~Replace all js `alert()` and `confirm()` with instances of `Modal`.~~
 
 7. Implement `ExportAs`
     * either add a button that opens a modal allowing user to change the file name (no change required for the sheet dirty indicator), or allow the filename to be editable on `SheetDetails` (requires sheet dirty indicator to be moved to the `SheetEditor` level)
 
 8. Dropping a palette sprite on animation workbench's playlist should update the playlist's count.
+
+9. Mouse event handling on `SpriteIndicator`
+    * Tiles: click to select (mouse coords. converted to nearest tile index)
+    * Frames: click to set upper (x,y), or click and drag to set bounding box
 
 &nbsp;
 

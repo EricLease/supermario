@@ -7,7 +7,7 @@ import {
 
 const ModalEvents = ['opened', 'closed'];
 const DefaultOkButtonClass = 'btn-outline-success';
-const DefaultCancelButtonClass = 'btn-outline-warning';
+const DefaultCancelButtonClass = 'btn-outline-secondary';
 
 const ifDef = (val, defaultVal) => 
     typeof val === 'undefined' || val === null ? defaultVal : val;
@@ -265,3 +265,57 @@ Modal.prototype.detach = function(options) {
     if (options.suppressEvt) return;
     this.listeners.get('closed').forEach(cb => cb());
 };
+
+Modal.prototype.reject = async function(content, evt, opts) {
+    return new Promise(resolve => {
+        const cb = () => {
+            this.dismiss();
+            if (evt) evt.cancel = true;
+            resolve(false);
+        };
+
+        this.show(_.merge({
+            dismiss: () => cb(),
+            header: { show: false },
+            body: { content: content },
+            footer: {
+                btnOk: {  
+                    cb: () => cb(),
+                    text: 'OK',
+                    class: 'btn-outline-warning'
+                },
+                btnCancel: { show: false }
+            }
+        }, opts || {}));
+    });
+};
+
+Modal.prototype.confirm = async function(content, evt, opts) {
+    return new Promise(resolve => {
+        const dismissCb = () => cb(true);
+        const cb = (cancel = false) => {
+            this.dismiss();
+            if (evt) evt.cancel = cancel || evt.cancel;
+            resolve(!cancel);
+        };
+
+        this.show(_.merge({
+            dismiss: dismissCb,
+            header: { show: false },
+            body: { content: content },
+            footer: {
+                btnOk: {  
+                    cb: () => cb(),
+                    text: 'OK',
+                    class: DefaultOkButtonClass
+                },
+                btnCancel: { 
+                    show: true, 
+                    text: 'Cancel',
+                    class: DefaultCancelButtonClass,
+                    cb: dismissCb
+                } 
+            }
+        }, opts || {}));
+    });
+}

@@ -46,34 +46,21 @@ export default class SpriteEditor extends eControl {
         };
         const initList = () => {            
             const dirtyCheck = async (evt) => {
-                return new Promise(resolve => {
-                    const dismissCb = () => cb(true);
-                    const cb = (cancel = false) => {
-                        this.modal.dismiss();
-                        resolve(evt.cancel = cancel);
-                    };
-
-                    evt.cancel = this.state.spriteDirty;
-
-                    if (!evt.cancel) {
-                        resolve(false);
-
-                        return;
-                    }
-
-                    this.modal.show({
-                        dismiss: dismissCb,
-                        header: { show: false },
-                        body: { content: 'There are unsaved changes.  Discard?' },
-                        footer: {
-                            btnOk: {  cb: () => cb() },
-                            btnCancel: { show: true, cb: dismissCb } 
-                        }
-                    });
-                });
+                return !this.state.spriteDirty
+                    ? Promise.resolve(true)
+                    : await this.modal.confirm(
+                        'There are unsaved changes.  Discard?', 
+                        evt, {
+                            footer: {
+                                btnOk: {
+                                    text: 'Discard',
+                                    class: 'btn-outline-danger'
+                                }
+                            }
+                        });
             };
             const edit = async (evt) => {
-                if (await dirtyCheck(evt)) return;
+                if (!await dirtyCheck(evt)) return;
 
                 let tgtWkb;
 
@@ -99,14 +86,17 @@ export default class SpriteEditor extends eControl {
                 this.workbenches[this.activeWorkbench].reset(evt);
             };
             const add = async (evt) => {
+                let msg;
+
                 if (evt.itemType === ItemType.Tile &&
                     (!this.sprites.width || !this.sprites.height)) {
-                    alert('Sprite sheet height and width must be set before tiles can be created.');
-                    evt.cancel = true;
-                    return;
+                    msg = 'Sprite sheet height and width must be set before tiles can be created.';                    
                 } else if (evt.itemType === ItemType.Animation && !this.sprites.tiles.size) {
-                    alert('Tiles or frames must be defined before animations can be created.');
-                    evt.cancel = true;                    
+                    msg = 'Tiles or frames must be defined before animations can be created.';
+                }
+
+                if (msg) {
+                    await this.modal.reject(msg, evt);
                     return;
                 }
 
@@ -115,27 +105,6 @@ export default class SpriteEditor extends eControl {
                 if (!evt.cancel) this.state.spriteDirty = true;
             };
             const remove = async (evt) => {
-                const reject = async (content) => {
-                    return new Promise(resolve => {
-                        const cb = () => {
-                            this.modal.dismiss();
-                            resolve(evt.cancel = true);
-                        };
-    
-                        this.modal.show({
-                            dismiss: () => cb(),
-                            header: { show: false },
-                            body: { content: content },
-                            footer: {
-                                btnOk: {  
-                                    cb: () => cb(),
-                                    class: 'btn-outline-primary'
-                                }
-                            }
-                        });
-                    });
-                };
-
                 if (evt.itemType !== ItemType.Animation) {
                     const contains = [...this.sprites.animationMetas.entries()]
                         .filter(([_, meta]) => meta.frames.indexOf(evt.itemName) > -1)
@@ -156,7 +125,7 @@ export default class SpriteEditor extends eControl {
                         content.appendChild(msg);
                         content.appendChild(contains);
 
-                        await reject(content)
+                        await this.modal.reject(content, evt);                        
                         return;
                     }
                 } 
@@ -164,15 +133,14 @@ export default class SpriteEditor extends eControl {
                 if (this.currentSprite && 
                     this.currentSprite.itemType === ItemType.Animation &&
                     this.state.spriteDirty) {
-                    await reject('Cannot delete the sprite while an animation is being edited');
+                    await this.modal.reject(
+                        'Cannot delete the sprite while an animation is being edited', evt);
                     return;
                 }
-                
-                // if (this.currentSprite.itemName === evt.itemName &&
-                //     this.currentSprite.itemType === evt.itemType &&
-                //     this.state.spriteDirty) {
-                //     await reject('Cannot delete the sprite while it is being edited');
-                // }
+
+                if (this.activeWorkbench === this.animationWorkbenchIndex) {
+                    this.workbenches[this.activeWorkbench].reset(this.currentSprite);
+                }
             };
             
             this.list = new SpriteList(this.state, this.sprites);

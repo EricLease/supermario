@@ -89,27 +89,6 @@ export default class AnimationDetails extends eControl {
         const buildSaveCancel = () => {
             const save = async (evt) => {
                 const valid = async () => {
-                    const reject = async (content) => {
-                        return new Promise(resolve => {
-                            const cb = () => {
-                                this.modal.dismiss();
-                                resolve(evt.cancel = true);
-                            };
-        
-                            this.modal.show({
-                                dismiss: () => cb(),
-                                header: { show: false },
-                                body: { content: content },
-                                footer: {
-                                    btnOk: {  
-                                        cb: () => cb(),
-                                        class: 'btn-outline-primary'
-                                    }
-                                }
-                            });
-                        });
-                    };
-    
                     if (!this.state.spriteDirty) return;
     
                     const ctlNames = ['name', 'frameLen']
@@ -126,19 +105,23 @@ export default class AnimationDetails extends eControl {
                         msg = `${ctlNames.join(', ')}, and ${msg}`;
                     }
 
-                    await reject(msg);
-
-                    return false;
+                    return await this.modal.reject(msg, evt);
                 };
                 
                 if (!await valid()) return;
 
                 if (this.name.value !== this.origName) {
                     if (this.sprites.animations.has(this.name.value) &&
-                        !confirm(`Animation with the name "${this.name.value}" already exists.  Overwrite?`)) {
-                        evt.cancel = true;
-                        return;
-                    }
+                        !await this.modal.confirm(
+                            `Animation with the name "${this.name.value}" already exists.  Overwrite?`,
+                            evt, {
+                                footer: {
+                                    btnOk: {
+                                        text: 'Overwrite',
+                                        class: 'btn-outline-warning'
+                                    }
+                                }
+                            })) return;
 
                     if (this.sprites.animations.has(this.origName)) {
                         this.sprites.animations.delete(this.origName);

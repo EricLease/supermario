@@ -1,4 +1,5 @@
 import eControl from './e-control.js';
+import Modal from './modal.js';
 import { getDivWithClasses, getButtonWithClasses, getElementWithClasses } from './dom-utilities.js';
 
 const SheetDetailsEvents = ['done'];
@@ -13,11 +14,18 @@ export default class SheetDetails extends eControl {
         this.ignore.push('fileName', 'sprites');
     }
 
-    export() {        
+    async export() {        
         if (this.state.spriteDirty && 
-            !confirm('There are pending changes.  Export sprite sheet before saving?')) {
-            return;
-        }
+            !await this.modal.confirm(
+                'There are pending changes.  Export sprite sheet before saving?',
+                null, {
+                    footer: {
+                        btnOk: {
+                            text: 'Discard',
+                            class: 'btn-outline-danger'
+                        }
+                    }
+                })) return;
     
         const data = JSON.stringify(this.sprites.export(), null, 4);
         const file = new Blob([data], {type: 'application/json'});
@@ -35,11 +43,18 @@ export default class SheetDetails extends eControl {
         });
     }
 
-    done() {
+    async done() {
         if ((this.state.sheetDirty || this.state.spriteDirty) && 
-            !confirm('There are pending changes.  Return to sheet selection without saving?')) {
-            return;
-        }
+            !await this.modal.confirm(
+                'There are pending changes.  Return to sheet selection without saving?',
+                null, {
+                    footer: {
+                        btnOk: {
+                            text: 'Discard',
+                            class: 'btn-outline-danger'
+                        }
+                    }
+                })) return;
 
         this.listeners.get('done').forEach(cb => cb());
     }
@@ -74,8 +89,8 @@ export default class SheetDetails extends eControl {
             const btnBack = getButtonWithClasses('Back', 'btn', 'btn-outline-primary', 'float-right', 'mr-2');
             const btnExport = getButtonWithClasses('Export', 'btn', 'btn-outline-success', 'float-right', 'mr-2');
             
-            btnBack.addEventListener('click', () => this.done());
-            btnExport.addEventListener('click', () => this.export());
+            btnBack.addEventListener('click', async () => await this.done());
+            btnExport.addEventListener('click', async () => await this.export());
             
             const col = getDivWithClasses('col-4');
             
@@ -86,8 +101,9 @@ export default class SheetDetails extends eControl {
         };
         
         this.container = getDivWithClasses('row');
-        this.container.appendChild(buildDetailsCol());        
-        this.container.appendChild(buildExportCol());  
+        this.container.appendChild(buildDetailsCol());
+        this.container.appendChild(buildExportCol());
+        this.modal = new Modal();
         this.built = true;
     }
 }
