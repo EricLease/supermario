@@ -40,9 +40,38 @@ You will see it is being served at `localhost:5000` by default.
 
 ## Take note (sprite-tool)
 * If the `imageUrl` value in a sprite sheet `.json` file is a path, it will be treted as an app root relative path on the server.
-* Creating a new sprite sheet with `sprite-tool` will embed the image's base64 data in the `.json` file.
+* Creating a new sprite sheet with `sprite-tool` will embed the image's base64 data in the `.json` file.  While this may be desirable for a `SpriteSheet` dedicated to tiles, it is likely *not* the desired behavior if multiple `SpriteSheet`s share the same `imageUrl`.  In that case, one should start with a bare `.json` file, with an `imageUrl` that is a relative path to the server image asset, as in Fig. 1, below.
 * If a sprite sheet was loaded into `sprite-tool` with a path `imageUrl`, the path will be preseved on export.  Likewise, embedded data will be preserved.
 * Export functionality is currently restricted to downloading the file to your browser's downloads folder, and possibly changing the name (e.g. appending '(1)').  Sprite sheets created with the tool must be moved, and possibly renamed before they can be used with the engine.
+
+> Ex. 1 Boilerplate sprite sheet `.json` that uses an external image<br/>
+> ```
+> {
+>    "imageUrl": "/assets/characters.gif"
+> }
+> ```
+> <br />
+
+> Ex. 2 A sprite sheet `.json` with an embedded image
+> ```
+> {
+>    "imageUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEFgwWDAAD/...",
+>    ...
+> }
+>
+> ```
+> <br/>
+
+&nbsp;
+
+# Roadmap
+
+* ### v0.5.0: map-editor
+* ### v0.6.0: entity-editor
+* ### v0.7.0: engine level/scene enhancements
+* ### v0.8.0: engine game state management
+* ### v0.9.0: server integration (data & asset storage, query api)
+* ### v1.0.0: PWA enhancements for offline mode
 
 &nbsp;
 
