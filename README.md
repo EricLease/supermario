@@ -65,7 +65,7 @@ You will see it is being served at `localhost:5000` by default.
 
     ~~Note: the first option would have to fall back to the second in some scenarios~~
 
-5. Prevent removal/renaming of sprites that are part of an animation in the current `SpriteSheet`.
+5. (v0.4.1, v0.4.4) ~~Prevent removal/renaming of sprites that are part of an animation in the current `SpriteSheet`.~~
 
 6. (v0.4.2) ~~Replace all js `alert()` and `confirm()` with instances of `Modal`.~~
 
