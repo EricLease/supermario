@@ -116,3 +116,7 @@ div.card.single {
     border-bottom: solid 1px rgba(0, 0, 0, 0.125) !important;
     border-radius: 4px !important;
 }
+
+div.workbench-col {
+    background-color: white;
+}

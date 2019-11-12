@@ -1,6 +1,7 @@
 import eControl from './e-control.js';
 import Modal from './modal.js';
-import { getDivWithClasses, getButtonWithClasses, getElementWithClasses } from './dom-utilities.js';
+import { getDivWithClasses, getButtonWithClasses, getElementWithClasses, getInputWithClasses } from './dom-utilities.js';
+import { guid } from './guid.js';
 
 const SheetDetailsEvents = ['done'];
 
@@ -56,32 +57,52 @@ export default class SheetDetails extends eControl {
                     }
                 })) return;
 
+        if (this.dirtyIndicator) {
+            clearInterval(this.dirtyIndicator);
+            this.dirtyIndicator = null;
+            document.body.style.backgroundColor = null;
+        }
+
         this.listeners.get('done').forEach(cb => cb());
     }
 
     build() {
         const buildDetailsCol = () => {
-            const buildRow = (label, value) => {
-                const row = getDivWithClasses('row');
-                const lCol = getDivWithClasses('col', 'col-xl-2', 'col-lg-3', 'col-md-4', 'col-sm-6', 'text-right');
-                const rCol = getDivWithClasses('col', 'col-xl-10', 'col-lg-9', 'col-md-8', 'col-sm-6');
-                const span = getElementWithClasses('span', 'text-truncate');
+            const buildRow = (text, value) => {
+                const nameChanged = () => {
+                    this.fileName = input.value;
+                    this.state.sheetDirty = true;
+                };
+                const formGroup = getDivWithClasses('form-group', 'row');
+                const label = getElementWithClasses('label', 'col-6', 'col-md-5', 'col-lg-3', 'col-xl-2', 'col-form-label');
+                const col = getDivWithClasses('col-12', 'col-sm-6', 'col-lg-5', 'col-xl-4');
+                const input = getInputWithClasses('text', 'form-control');
+                const id = `_${guid()}`;
 
-                lCol.innerText = label;
-                row.appendChild(lCol);
-                span.innerText = value;
-                rCol.appendChild(span);
-                row.appendChild(rCol);
+                input.id = id;
+                input.value = value;
+                
+                if (text !== 'Sprite Sheet') input.setAttribute('readonly', true);
+                else {
+                    input.placeholder = 'sprite sheet name (.json)';
+                    this.listenTo(input, 'keyup', () => nameChanged());
+                }
 
-                return row;
+                col.appendChild(input);
+                label.innerText = text;
+                label.setAttribute('for', id);
+                formGroup.appendChild(label);
+                formGroup.appendChild(col);
+
+                return formGroup;
             };
-            const col = getDivWithClasses('col-8');
+            const col = getDivWithClasses('col-7', 'col-lg-8');
             
-            col.appendChild(buildRow('Sprite Sheet:', this.fileName));
-            col.appendChild(buildRow('Asset:', this.sprites.displayImageUrl));
+            col.appendChild(buildRow('Sprite Sheet', this.fileName));
+            col.appendChild(buildRow('Asset', this.sprites.displayImageUrl));
 
-            if (this.sprites.width) col.appendChild(buildRow('Tile Width:', this.sprites.width));
-            if (this.sprites.height) col.appendChild(buildRow('Tile Width:', this.sprites.height));
+            if (this.sprites.width) col.appendChild(buildRow('Tile Width', this.sprites.width));
+            if (this.sprites.height) col.appendChild(buildRow('Tile Width', this.sprites.height));
 
             return col;
         };
@@ -92,17 +113,24 @@ export default class SheetDetails extends eControl {
             btnBack.addEventListener('click', async () => await this.done());
             btnExport.addEventListener('click', async () => await this.export());
             
-            const col = getDivWithClasses('col-4');
+            const col = getDivWithClasses('col-5', 'col-lg-4');
             
             col.append(btnBack);
             col.append(btnExport);
 
             return col;
         };
+        const initDirtyIndicator = () => {
+            this.dirtyIndicator = setInterval(() => {
+                document.body.style.backgroundColor =
+                    this.state.sheetDirty ? 'lightyellow' : null;
+            }, 300);
+        };
         
         this.container = getDivWithClasses('row');
         this.container.appendChild(buildDetailsCol());
         this.container.appendChild(buildExportCol());
+        initDirtyIndicator();
         this.modal = new Modal();
         this.built = true;
     }

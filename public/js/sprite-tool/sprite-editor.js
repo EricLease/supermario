@@ -71,9 +71,12 @@ export default class SpriteEditor extends eControl {
                     default:
                         this.workbenches.forEach(wb => wb.close());
                         this.activeWorkbench = -1;
-                        this.currentSprite = null;        
+                        this.currentSprite = null;
+                        workbenchCol.classList.remove('workbench-col');
                         return;
                 }
+
+                workbenchCol.classList.add('workbench-col');
 
                 if (tgtWkb != this.activeWorkbench) {
                     swapWorkbenches(
@@ -187,14 +190,12 @@ export default class SpriteEditor extends eControl {
         };
         const initDirtyIndicators = () => {
             this.dirtyIndicator = setInterval(() => {
-                this.list.parent.style.backgroundColor =
-                    this.state.sheetDirty ? 'lightyellow' : null;
                 workbenchCol.style.backgroundColor =
                     this.state.spriteDirty ? 'lightyellow' : null;
-            }, 1000);
+            }, 300);
         };
         const workbenchCol = buildCol('col-lg-7', 'col-xl-8');
-        
+                
         this.container = getDivWithClasses('row');
         initList();
         initWorkbenches();
