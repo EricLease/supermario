@@ -128,11 +128,6 @@ export default class StaticDetails extends eControl {
                                     }
                                 }
                             })) return;
-
-                    if (this.sprites.tiles.has(this.origName)) {
-                        this.sprites.tiles.delete(this.origName);
-                        this.sprites.tileMetas.delete(this.origName);
-                    }
                 }
 
                 this.sprites.define(

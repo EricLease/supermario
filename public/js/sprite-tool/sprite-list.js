@@ -65,13 +65,13 @@ async function addCb(evt) {
     this.previous.push(prev);
 }
 
-function buildStaticEditPanel() {
+function buildStaticEditPanel(setMaxHeight = false) {
     const staticOpts = { 
         containerClass: this.containerClass, 
         clickCb: async (evt) => await clickCb.call(this, evt),
         addCb: async (evt) => await addCb.call(this, evt), 
         expand: true, 
-        setMaxHeight: false,
+        setMaxHeight: setMaxHeight,
         enableDrag: true,
         contextId: this.uniqueId,
         enableDrop: true,                
@@ -214,17 +214,6 @@ async function remove(orig) {
 
     if (cancel) return;
 
-    if (!back) {
-        const prev = this.container.querySelector('li.selected');
-    
-        if (prev && 
-            parseInt(prev.dataset.itemType) === ItemType.Animation &&
-            parseInt(orig.dataset.itemType) !== ItemType.Animation) {
-            // Reset animation palette
-            await raiseChange.call(this, prev.dataset.itemName, parseInt(prev.dataset.itemType));
-        }
-    }
-
     const set = parseInt(orig.dataset.itemType) === ItemType.Animation
         ? 'animations' : 'tiles';
     const metaSet = `${set.substr(0, set.length - 1)}Metas`;
@@ -243,7 +232,16 @@ async function remove(orig) {
     orig.remove();
     this.state.sheetDirty = true;
 
-    if (back) this.back();
+    if (back) { await this.back(); return; }
+
+    const prev = this.container.querySelector('li.selected');
+    
+    if (prev && 
+        parseInt(prev.dataset.itemType) === ItemType.Animation &&
+        parseInt(orig.dataset.itemType) !== ItemType.Animation) {
+        // Reset animation palette
+        await raiseChange.call(this, prev.dataset.itemName, parseInt(prev.dataset.itemType));
+    }
 }
 
 async function drop(evt) {
@@ -286,7 +284,7 @@ export default class SpriteList extends eControl {
             case ItemType.Tile:
             case ItemType.Frame:
                 destroyEditPanel.call(this, this.container.firstChild);
-                buildStaticEditPanel.call(this);
+                buildStaticEditPanel.call(this, true);
                 swapEditPanels(this.container);
                 panel = this.container.firstChild;
                 break;
@@ -305,6 +303,7 @@ export default class SpriteList extends eControl {
         panel.querySelector('div.collapse').classList.add('show');
         panel.querySelectorAll('li').forEach(li => {
             if (li.dataset.itemName === evt.itemName) {
+                if (prevLi !== li) this.previous.push(prevLi);
                 li.classList.add('selected');
                 setTimeout(() => li.scrollIntoView());
             }
@@ -323,12 +322,23 @@ export default class SpriteList extends eControl {
     }
 
     async back() {
-        if (this.previous.length) {
-            await this.previous.pop().click();
+        let li;
+
+        while (this.previous.length && !li) {
+            li = this.previous.pop();
+        }
+
+        if (!li) {
+            await raiseChange.call(this);
             return;
         }
 
-        await raiseChange.call(this);
+        const itemType = li.dataset.itemType;
+        const itemName = li.dataset.itemName;
+        
+        await this.container
+            .querySelector(`li[data-item-type="${itemType}"][data-item-name="${itemName}"]`)
+            .click();
     }
 
     dispose() {

@@ -147,10 +147,6 @@ export default class SpriteEditor extends eControl {
                     evt.back = true;
                     return;
                 }
-
-                if (this.activeWorkbench === this.animationWorkbenchIndex) {
-                    this.workbenches[this.activeWorkbench].reset(this.currentSprite);
-                }
             };
             
             this.list = new SpriteList(this.state, this.sprites);
@@ -163,13 +159,20 @@ export default class SpriteEditor extends eControl {
         };
         const initWorkbenches = () => {
             const initWorkbench = (ctor) => {
+                const spritesUpdated = (evt) => {
+                    this.currentSprite = {
+                        itemName: evt.itemName,
+                        itemType: evt.itemType,
+                    };
+                    this.list.update(evt);
+                };
                 const wb = new ctor(this.state, this.sprites);
     
                 if (!wb instanceof SpriteWorkbench) {
                     throw new Error('SpriteEditor only accepts workbenches of type SpriteWorkbench')
                 }
     
-                wb.addEventListener('spritesupdated', (evt) => this.list.update(evt));
+                wb.addEventListener('spritesupdated', (evt) => spritesUpdated(evt));
                 wb.addEventListener('canceladd', () => this.list.back());
                 wb.parent = workbenchCol;
                 this.children.push(wb);

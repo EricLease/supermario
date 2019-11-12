@@ -124,11 +124,6 @@ export default class AnimationDetails extends eControl {
                                     }
                                 }
                             })) return;
-
-                    if (this.sprites.animations.has(this.origName)) {
-                        this.sprites.animations.delete(this.origName);
-                        this.sprites.animationMetas.delete(this.origName);
-                    }
                 }
 
                 this.sprites.defineAnimation(

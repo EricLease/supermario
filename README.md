@@ -55,7 +55,7 @@ You will see it is being served at `localhost:5000` by default.
     * ~~add `contextId` to data being transfered~~
     * ~~restrict `drop` event handlers to only act on data a valid `contextId` for the handler~~
 
-2. Allow `Save` of an existing sprite to create a new sprite when the name has changed, rather than changing the name of the existing sprite. **Still warn user if it would overwrite an existing sprite!**
+2. (v0.4.5) ~~Allow `Save` of an existing sprite to create a new sprite when the name has changed, rather than changing the name of the existing sprite. **Still warn user if it would overwrite an existing sprite!**~~
 
 3. Allow selection of `DefaultSpriteType` (e.g. _"solid"_).
 
