@@ -13,7 +13,7 @@ import { createAnimation } from '../engine/animation.js';
 import { ItemType } from './item-type.js';
 import { capitalize } from './string-utilities.js';
 
-const AnimationDetailsEvents = ['save', 'cancel'];
+const AnimationDetailsEvents = ['save', 'cancel', 'canceladd'];
 const EditItemScale = 2;
 
 function updatePreview() {
@@ -23,9 +23,11 @@ function updatePreview() {
         const update = (deltaTime) => {
             const tileName = this.animation(lifetime += deltaTime);            
             
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            this.sprites.draw(tileName, ctx, 0, 0);
-            prev = tileName;
+            if (tileName !== prev) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                this.sprites.draw(tileName, ctx, 0, 0);
+                prev = tileName;
+            }
         };
         const metas = this.frames.map(f => this.sprites.tileMetas.get(f));
         let prev = null;
@@ -143,11 +145,17 @@ export default class AnimationDetails extends eControl {
                         itemName: this.name.value 
                     }));
             };
-            const cancel = (evt) => {
+            const cancel = () => {
                 if (!this.state.spriteDirty) return;
 
-                this.reset(this.origName);
-                this.listeners.get('cancel').forEach(cb => cb());
+                if (this.sprites.animations.has(this.origName)) {
+                    this.reset(this.origName);
+                    this.listeners.get('cancel').forEach(cb => cb());
+                    return;
+                }
+                
+                this.state.spriteDirty = false;
+                this.listeners.get('canceladd').forEach(cb => cb());
             };           
             const col = getDivWithClasses(...colBaseClasses, 'save-cancel');
             const saveRow = getDivWithClasses('row');
@@ -166,7 +174,7 @@ export default class AnimationDetails extends eControl {
             this.btnCancel = getButtonWithClasses('Cancel', 'btn', 'btn-outline-warning');
             this.btnCancel.setAttribute('disabled', true);
             this.btnCancel.dataset.ignoreId = 
-                this.listenTo(this.btnCancel, 'click', (evt) => cancel(evt));
+                this.listenTo(this.btnCancel, 'click', () => cancel());
             cancelCol.appendChild(this.btnCancel);
             cancelRow.appendChild(cancelCol);
             col.appendChild(cancelRow);                        

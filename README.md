@@ -59,11 +59,11 @@ You will see it is being served at `localhost:5000` by default.
 
 3. Allow selection of `DefaultSpriteType` (e.g. _"solid"_).
 
-4. Change behavior of `Cancel` action when creating a new sprite to do one of the following 
-    * return to the previously selected sprite
-    * hide the `ActiveWorkbench`, like when the `SheetEditor` is first built.
+4. (v0.4.4) ~~Change behavior of `Cancel` action when creating a new sprite to do one of the following~~ 
+    * ~~return to the previously selected sprite~~
+    * ~~hide the `ActiveWorkbench`, like when the `SheetEditor` is first built.~~
 
-    Note: the first option would have to fall back to the second in some scenarios
+    ~~Note: the first option would have to fall back to the second in some scenarios~~
 
 5. Prevent removal/renaming of sprites that are part of an animation in the current `SpriteSheet`.
 
@@ -74,7 +74,9 @@ You will see it is being served at `localhost:5000` by default.
 
 8. Dropping a palette sprite on animation workbench's playlist should update the playlist's count.
 
-9. (v0.4.3) ~~Mouse event handling on `SpriteIndicator`~~
+9. Removing a sprite from the `SpriteList` should decrement the count in the panel header.
+
+10. (v0.4.3) ~~Mouse event handling on `SpriteIndicator`~~
     * ~~Tiles: click to select (mouse coords. converted to nearest tile index)~~
     * ~~Frames: click to set upper (x,y), or click and drag to set bounding box~~
 

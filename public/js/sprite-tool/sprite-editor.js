@@ -66,10 +66,13 @@ export default class SpriteEditor extends eControl {
 
                 switch (evt.itemType) {
                     case ItemType.Tile:
-                    case ItemType.Frame: tgtWkb = this.staticWorkbenchIndex; break;
-                    case ItemType.Animation: tgtWkb = this.animationWorkbenchIndex; break;
-                    default:                        
-                        throw new Error(`Invalid ItemType (${evt.itemType}) on list event`);
+                    case ItemType.Frame: tgtWkb = this.staticWorkbenchIndex; break;                    
+                    case ItemType.Animation: tgtWkb = this.animationWorkbenchIndex; break;                    
+                    default:
+                        this.workbenches.forEach(wb => wb.close());
+                        this.activeWorkbench = -1;
+                        this.currentSprite = null;        
+                        return;
                 }
 
                 if (tgtWkb != this.activeWorkbench) {
@@ -138,6 +141,13 @@ export default class SpriteEditor extends eControl {
                     return;
                 }
 
+                if (this.currentSprite &&
+                    this.currentSprite.itemType === parseInt(evt.itemType) &&
+                    this.currentSprite.itemName === evt.itemName) {
+                    evt.back = true;
+                    return;
+                }
+
                 if (this.activeWorkbench === this.animationWorkbenchIndex) {
                     this.workbenches[this.activeWorkbench].reset(this.currentSprite);
                 }
@@ -160,6 +170,7 @@ export default class SpriteEditor extends eControl {
                 }
     
                 wb.addEventListener('spritesupdated', (evt) => this.list.update(evt));
+                wb.addEventListener('canceladd', () => this.list.back());
                 wb.parent = workbenchCol;
                 this.children.push(wb);
     

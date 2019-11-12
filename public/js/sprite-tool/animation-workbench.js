@@ -1,7 +1,7 @@
 import SpriteWorkbench from './sprite-workbench.js';
 import AnimationDetails from './animation-details.js';
 import FramesetEditor from './frameset-editor.js';
-import { getDivWithClasses } from './dom-utilities.js';
+import { getDivWithClasses, bsHide } from './dom-utilities.js';
 
 const AnimationWorkbenchEvents = [];
 
@@ -22,13 +22,27 @@ export default class AnimationWorkbench extends SpriteWorkbench {
 
     cleanup() { if (this.details) this.details.cleanup(); }
 
+    close() { 
+        if (this.details && this.details.timer) {
+            this.details.timer.pause(); 
+        }
+
+        bsHide(this.container); 
+    }
+
     build() {
         const initDetails = () => {
+            const save = 
+                (evt) => this.listeners.get('spritesupdated').forEach(cb => cb(evt));
+            const cancel = 
+                () => this.frameset.reset(this.currentAnimation);
+            const cancelAdd = 
+                () => this.listeners.get('canceladd').forEach(cb => cb());
+
             this.details = new AnimationDetails(this.state, this.sprites);
-            this.listenTo(this.details, 'save', 
-                (evt) => this.listeners.get('spritesupdated').forEach(cb => cb(evt)));
-            this.listenTo(this.details, 'cancel',
-                () => this.frameset.reset(this.currentAnimation))
+            this.listenTo(this.details, 'save', (evt) => save(evt));
+            this.listenTo(this.details, 'cancel', () => cancel());
+            this.listenTo(this.details, 'canceladd', () => cancelAdd());
             this.children.push(this.details);
         };
         const initFrameset = () => {

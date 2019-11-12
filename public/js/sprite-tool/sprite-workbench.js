@@ -1,7 +1,7 @@
 import eControl from './e-control.js';
 import { bsHide, bsShow } from './dom-utilities.js';
 
-const SpriteWorkbenchEvents = ['spritesupdated'];
+const SpriteWorkbenchEvents = ['spritesupdated', 'canceladd'];
 
 export default class SpriteWorkbench extends eControl {
     constructor(...events) {

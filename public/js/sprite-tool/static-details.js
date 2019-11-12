@@ -10,7 +10,7 @@ import {
     getInputWithClasses}  from './dom-utilities.js';
 import { getTileMetaOrDefault } from './sprite-utilities.js';
 
-const StaticDetailsEvents = ['boundschanged', 'save'];
+const StaticDetailsEvents = ['boundschanged', 'save', 'canceladd'];
 const EditItemScale = 2;
 
 function updatePreview() {
@@ -155,7 +155,13 @@ export default class StaticDetails extends eControl {
             const cancel = (evt) => {
                 if (!this.state.spriteDirty) return;
 
-                this.reset(this.currentType, this.origName);
+                if (this.sprites.tiles.has(this.origName)) {
+                    this.reset(this.currentType, this.origName);
+                    return;
+                }
+
+                this.state.spriteDirty = false;
+                this.listeners.get('canceladd').forEach(cb => cb());
             };           
             const col = getDivWithClasses(...smColClasses, 'save-cancel');
             const saveRow = getDivWithClasses('row');

@@ -34,7 +34,10 @@ async function clickCb(evt){
     if (prev !== li) {
         if (await raiseChange.call(this, itemName, itemType)) return;
 
-        if (prev) prev.classList.remove('selected');
+        if (prev) {
+            prev.classList.remove('selected');
+            this.previous.push(prev);
+        }
 
         li.classList.add('selected');
     }
@@ -59,6 +62,7 @@ async function addCb(evt) {
     if (!prev) return;
     
     prev.classList.remove('selected');
+    this.previous.push(prev);
 }
 
 function buildStaticEditPanel() {
@@ -189,6 +193,7 @@ async function remove(orig) {
         })) return;
 
     const promises = [];
+    let back = false;
     let cancel = false;
     
     this.listeners.get('remove').forEach(cb => {
@@ -200,6 +205,7 @@ async function remove(orig) {
             }; 
 
             await cb(evt); 
+            back = evt.back || back;
             cancel = evt.cancel || cancel; 
         })());
     });
@@ -208,12 +214,15 @@ async function remove(orig) {
 
     if (cancel) return;
 
-    const prev = this.container.querySelector('li.selected');
-
-    if (prev && parseInt(prev.dataset.itemType) === ItemType.Animation &&
-        parseInt(orig.dataset.itemType) !== ItemType.Animation) {
-        // Reset animation palette
-        await raiseChange.call(this, prev.dataset.itemName, parseInt(prev.dataset.itemType));
+    if (!back) {
+        const prev = this.container.querySelector('li.selected');
+    
+        if (prev && 
+            parseInt(prev.dataset.itemType) === ItemType.Animation &&
+            parseInt(orig.dataset.itemType) !== ItemType.Animation) {
+            // Reset animation palette
+            await raiseChange.call(this, prev.dataset.itemName, parseInt(prev.dataset.itemType));
+        }
     }
 
     const set = parseInt(orig.dataset.itemType) === ItemType.Animation
@@ -230,8 +239,11 @@ async function remove(orig) {
     this.ignoreEvent(orig.dataset.dragId);
     this.ignoreEvent(orig.dataset.dropId);
     this.ignoreEvent(orig.dataset.dragOverId);
+    this.previous = this.previous.filter(p => p !== orig);
     orig.remove();
     this.state.sheetDirty = true;
+
+    if (back) this.back();
 }
 
 async function drop(evt) {
@@ -305,8 +317,18 @@ export default class SpriteList extends eControl {
         buildStaticEditPanel.call(this);
         buildAnimationEditPanel.call(this);
         this.listenTo(window, 'drop', async (evt) => await drop.call(this, evt));
+        this.previous = [];
         this.modal = new Modal();
         this.built = true;
+    }
+
+    async back() {
+        if (this.previous.length) {
+            await this.previous.pop().click();
+            return;
+        }
+
+        await raiseChange.call(this);
     }
 
     dispose() {

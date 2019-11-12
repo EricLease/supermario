@@ -17,24 +17,16 @@ export default class StaticWorkbench extends SpriteWorkbench {
     }
 
     reset(evt) {
-        const resetIndicator = () => {
-            const meta = getTileMetaOrDefault(
-                this.sprites, evt.itemType, evt.itemName);
-                
-            this.indicator.reset(
-                new Vec2(meta.x, meta.y), 
-                new Vec2(meta.width, meta.height));
-        }
-
+        // bounds changed on details triggers reset on indicator
         this.details.reset(evt.itemType, evt.itemName);
-        resetIndicator();
     }
 
     build() {
         const initDetails = () => {
-            const spritesUpdated = (evt) => {
-                this.listeners.get('spritesupdated').forEach(cb => cb(evt));
-            };
+            const spritesUpdated = 
+                (evt) => this.listeners.get('spritesupdated').forEach(cb => cb(evt));
+            const cancelAdd = 
+                () => this.listeners.get('canceladd').forEach(cb => cb());
             const boundsChanged = (evt) => {
                 if (!(evt.x >= 0 && evt.y >= 0 && evt.w >= 0&& evt.h >= 0)) return;
 
@@ -44,8 +36,9 @@ export default class StaticWorkbench extends SpriteWorkbench {
             };
 
             this.details = new StaticDetails(this.state, this.sprites);
-            this.details.addEventListener('save', (evt) => spritesUpdated(evt));
-            this.details.addEventListener('boundschanged', (evt) => boundsChanged(evt))
+            this.listenTo(this.details, 'save', (evt) => spritesUpdated(evt));
+            this.listenTo(this.details, 'canceladd', () => cancelAdd());
+            this.listenTo(this.details, 'boundschanged', (evt) => boundsChanged(evt))
             this.children.push(this.details);
         };
         const initIndicator = () => {   
