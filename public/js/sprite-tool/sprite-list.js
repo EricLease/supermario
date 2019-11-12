@@ -5,7 +5,7 @@ import {
     buildAnimationList, 
     buildEditPanel } from './builders.js';
 import { ItemType } from './item-type.js';
-import { getDivWithClasses, getNodeIndex, removeChildren } from './dom-utilities.js';
+import { getDivWithClasses, getNodeIndex, removeChildren, findParent } from './dom-utilities.js';
 import { guid } from './guid.js';
 import { getDataTransferData } from './drag-and-drop-utilities.js';
 
@@ -229,7 +229,12 @@ async function remove(orig) {
     this.ignoreEvent(orig.dataset.dropId);
     this.ignoreEvent(orig.dataset.dragOverId);
     this.previous = this.previous.filter(p => p !== orig);
+    
+    const btn = findParent(orig, 'div.card').querySelector('h5 button');
+    
+    btn.innerText = `${btn.innerText.split('(')[0]}(${this.sprites[set].size})`;
     orig.remove();
+    
     this.state.sheetDirty = true;
 
     if (back) { await this.back(); return; }

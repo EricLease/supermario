@@ -72,11 +72,13 @@ You will see it is being served at `localhost:5000` by default.
 7. Implement `ExportAs`
     * either add a button that opens a modal allowing user to change the file name (no change required for the sheet dirty indicator), or allow the filename to be editable on `SheetDetails` (requires sheet dirty indicator to be moved to the `SheetEditor` level)
 
-8. Dropping a palette sprite on animation workbench's playlist should update the playlist's count.
+8. (v0.4.6) ~~Adding a palette sprite on animation workbench's playlist should update the playlist's count.~~
 
-9. Removing a sprite from the `SpriteList` should decrement the count in the panel header.
+9. (v0.4.6) ~~Removing a palette sprite on animation workbench's playlist should update the playlist's count.~~
 
-10. (v0.4.3) ~~Mouse event handling on `SpriteIndicator`~~
+10. (v0.4.6) ~~Removing a sprite from the `SpriteList` should decrement the count in the panel header.~~
+
+11. (v0.4.3) ~~Mouse event handling on `SpriteIndicator`~~
     * ~~Tiles: click to select (mouse coords. converted to nearest tile index)~~
     * ~~Frames: click to set upper (x,y), or click and drag to set bounding box~~
 

@@ -1,11 +1,11 @@
 import eControl from './e-control.js';
-import { getDivWithClasses, removeChildren } from './dom-utilities.js';
-import { buildEditPanel, buildStaticLists, buildStaticListItem } from './builders.js';
-import { ItemType } from './item-type.js';
 import { guid } from './guid.js';
-import { getAnimationMetaOrDefault } from './sprite-utilities.js';
-import { setDataTransferData, getDataTransferData } from './drag-and-drop-utilities.js';
+import { ItemType } from './item-type.js';
 import { getNodeIndex } from './dom-utilities.js';
+import { getAnimationMetaOrDefault } from './sprite-utilities.js';
+import { getDivWithClasses, removeChildren } from './dom-utilities.js';
+import { setDataTransferData, getDataTransferData } from './drag-and-drop-utilities.js';
+import { buildEditPanel, buildStaticLists, buildStaticListItem } from './builders.js';
 
 const FramesetEditorEvents = ['change'];
 
@@ -23,11 +23,18 @@ function move(orig, tgt) {
         targetIdx, 0, ...this.frames.splice(origIdx, 1));
 }
 
+function updateCount() {
+    const span = this.playlist.querySelector('h5 span');
+
+    span.innerText = `${span.innerText.split('(')[0]}(${this.frames.length})`;
+}
+
 function remove(orig) {
     this.ignoreEvent(orig.dataset.dragId);
     this.ignoreEvent(orig.dataset.dropId);
     this.ignoreEvent(orig.dataset.dragOverId);
     this.frames.splice(getNodeIndex(orig), 1);
+    updateCount.call(this);
     orig.remove();
 }
 
@@ -39,7 +46,7 @@ function add(orig, tgt) {
         frameName, 
         li.querySelector('canvas').getContext('2d'), 
         0, 0);
-    li.dataset.included = this.uniqueId;    
+    li.dataset.playlist = this.uniqueId;    
     li.dataset.dragId = this.listenTo(
         li, 'dragstart', 
         (evt) => {
@@ -51,13 +58,13 @@ function add(orig, tgt) {
 
     if (!tgt.matches('li')) {
         this.frames.push(frameName);
-        this.included.querySelector('ul').appendChild(li);
-        
-        return;
+        this.playlist.querySelector('ul').appendChild(li);
+    } else {
+        this.frames.splice(getNodeIndex(tgt), 0, frameName);
+        tgt.parentNode.insertBefore(li, tgt);
     }
-    
-    this.frames.splice(getNodeIndex(tgt), 0, frameName);
-    tgt.parentNode.insertBefore(li, tgt);
+
+    updateCount.call(this);
 }
 
 function drop(evt) {
@@ -67,9 +74,9 @@ function drop(evt) {
 
     const orig = document.querySelector(`[data-drag-id="${data.dragId}"]`);
     const tgt = evt.currentTarget;
-    const included = orig.dataset.included === this.uniqueId;
+    const playlist = orig.dataset.playlist === this.uniqueId;
     
-    if (included) {
+    if (playlist) {
         if (tgt.matches && tgt.matches('li')) {
             move.call(this, orig, tgt);
         } else remove.call(this, orig);
@@ -98,15 +105,15 @@ export default class FramesetEditor extends eControl {
     }
 
     reset(itemName) {
-        const resetIncluded = () => {
+        const resetPlaylist = () => {
             this.frames = Array.from(getAnimationMetaOrDefault(this.sprites, itemName).frames);
             
             const frameSet = this.frames
                 .map(f => buildStaticListItem(this.sprites.tileMetas.get(f), this.sprites))
-                .map(li => { li.dataset.included = this.uniqueId; return li; });
+                .map(li => { li.dataset.playlist = this.uniqueId; return li; });
             const opts = { 
-                container: this.included, 
-                containerClass: this.includedClass, 
+                container: this.playlist, 
+                containerClass: this.playlistClass, 
                 expand: true, 
                 collapsible: false,
                 enableAdd: false, 
@@ -118,9 +125,9 @@ export default class FramesetEditor extends eControl {
                 label: 'Playlist'
             };
 
-            removeChildren(this.included);
+            removeChildren(this.playlist);
             buildEditPanel(this, frameSet, this.itemType, opts);
-            this.included.querySelector('.card').classList.add('single');
+            this.playlist.querySelector('.card').classList.add('single');
         };
         const resetPalette = () => {
             const [tiles, frames] = buildStaticLists(this.sprites);
@@ -142,7 +149,7 @@ export default class FramesetEditor extends eControl {
         };
                 
         resetPalette();
-        resetIncluded();
+        resetPlaylist();
     }
 
     build() {
@@ -157,7 +164,7 @@ export default class FramesetEditor extends eControl {
         };
         
         this.container = getDivWithClasses('row', 'mb-0', 'p-0');
-        ['included', 'palette'].forEach(initList);
+        ['playlist', 'palette'].forEach(initList);
         this.listenTo(window, 'dragover', (evt) => evt.preventDefault());
         this.listenTo(window, 'drop', (evt) => drop.call(this, evt));
         this.built = true;
