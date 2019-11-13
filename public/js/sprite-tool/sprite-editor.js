@@ -6,6 +6,7 @@ import StaticWorkbench from './static-workbench.js';
 import AnimationWorkbench from './animation-workbench.js';
 import { ItemType } from '../common/item-type.js';
 import { getDivWithClasses } from '../common/dom-utilities.js';
+import { dirtyCheck } from '../common/modal-utilities.js';
 
 const SpriteEditorEvents = [];
 const SpriteEditorWorkbenches = [StaticWorkbench, AnimationWorkbench];
@@ -45,22 +46,8 @@ export default class SpriteEditor extends eControl {
                 ...addlClasses);
         };
         const initList = () => {            
-            const dirtyCheck = async (evt) => {
-                return !this.state.spriteDirty
-                    ? Promise.resolve(true)
-                    : await this.modal.confirm(
-                        'There are unsaved changes.  Discard?', 
-                        evt, {
-                            footer: {
-                                btnOk: {
-                                    text: 'Discard',
-                                    class: 'btn-outline-danger'
-                                }
-                            }
-                        });
-            };
             const edit = async (evt) => {
-                if (!await dirtyCheck(evt)) return;
+                if (!await dirtyCheck(this.modal, evt, this.state.spriteDirty)) return;
 
                 let tgtWkb;
 
