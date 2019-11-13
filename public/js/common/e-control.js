@@ -87,10 +87,10 @@ export default class eControl {
 
     removeEventListener(evt, cb) {
         if (!this.listeners.has(evt)) return;
-
+    
         const cbs = this.listeners.get(evt);
-        const idx = cbs.lastIndexOf(cb);
-
+        const idx = cb ? cbs.lastIndexOf(cb) : cbs.length - 1;
+    
         if (idx > -1) cbs.splice(idx, 1);
     }
 }

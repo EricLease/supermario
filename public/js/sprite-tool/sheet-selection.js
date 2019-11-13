@@ -1,5 +1,5 @@
-import eControl from './e-control.js';
-import Modal from './modal.js';
+import eControl from '../common/e-control.js';
+import Modal from '../common/modal.js';
 import SpriteSheet from '../engine/sprite-sheet.js';
 import { loadClientImage, loadClientSpriteSheet } from './loaders.js';
 import { buildStaticLists, buildAnimationList } from './builders.js';
@@ -11,9 +11,9 @@ import {
     getElementWithClasses, 
     getNumberInput,
     getInputWithClasses,
-    findParent } from './dom-utilities.js';
-import { capitalize } from './string-utilities.js';
-import { ItemType } from './item-type.js';
+    findParent } from '../common/dom-utilities.js';
+import { capitalize } from '../common/string-utilities.js';
+import { ItemType } from '../common/item-type.js';
 
 const SheetSelectionEvents = [ 'sheetselected' ];
 const ExistingFileEmpty = 'Choose a sprite sheet...';

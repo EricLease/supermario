@@ -1,4 +1,4 @@
-import { ItemType } from './item-type.js';
+import { ItemType } from '../common/item-type.js';
 
 function mockTileMeta(w, h, itemType) {
     w = w || 16;

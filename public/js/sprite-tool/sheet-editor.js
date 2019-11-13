@@ -1,7 +1,7 @@
-import eControl from './e-control.js';
+import eControl from '../common/e-control.js';
 import SheetDetails from './sheet-details.js';
 import SpriteEditor from './sprite-editor.js';
-import { getDivWithClasses } from './dom-utilities.js';
+import { getDivWithClasses } from '../common/dom-utilities.js';
 
 const SheetEditorEvents = ['done'];
 

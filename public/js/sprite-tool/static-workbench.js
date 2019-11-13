@@ -1,9 +1,8 @@
 import SpriteWorkbench from './sprite-workbench.js';
 import StaticDetails from './static-details.js';
 import SpriteIndicator from './sprite-indicator.js';
-import { getTileMetaOrDefault } from './sprite-utilities.js';
 import { Vec2 } from '../engine/math.js';
-import { getDivWithClasses } from './dom-utilities.js';
+import { getDivWithClasses } from '../common/dom-utilities.js';
 
 const StaticWorkbenchEvents = ['spritesupdated'];
 

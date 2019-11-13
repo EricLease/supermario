@@ -1,8 +1,11 @@
 import Timer from '../engine/timer.js';
-import { ItemType, getItemTypeName } from './item-type.js';
-import { getDivWithClasses, getButtonWithClasses, getElementWithClasses } from './dom-utilities.js';
-import { guid } from './guid.js';
-import { setDataTransferData } from './drag-and-drop-utilities.js';
+import { guid } from '../common/guid.js';
+import { 
+    getDivWithClasses, 
+    getButtonWithClasses, 
+    getElementWithClasses } from '../common/dom-utilities.js';
+import { ItemType, getItemTypeName } from '../common/item-type.js';
+import { setDataTransferData } from '../common/drag-and-drop-utilities.js';
 
 export function buildStaticListItem(tileMeta, sprites, scale = 1) {
     const li = getElementWithClasses('li', 'tile-detail', 'text-truncate');            

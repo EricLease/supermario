@@ -1,7 +1,11 @@
-import eControl from './e-control.js';
-import Modal from './modal.js';
-import { getDivWithClasses, getButtonWithClasses, getElementWithClasses, getInputWithClasses } from './dom-utilities.js';
-import { guid } from './guid.js';
+import eControl from '../common/e-control.js';
+import Modal from '../common/modal.js';
+import { guid } from '../common/guid.js';
+import { 
+    getDivWithClasses, 
+    getButtonWithClasses, 
+    getElementWithClasses, 
+    getInputWithClasses } from '../common/dom-utilities.js';
 
 const SheetDetailsEvents = ['done'];
 

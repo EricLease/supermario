@@ -1,5 +1,5 @@
-import eControl from './e-control.js';
-import { getDivWithClasses } from './dom-utilities.js';
+import eControl from '../common/e-control.js';
+import { getDivWithClasses } from '../common/dom-utilities.js';
 import { Vec2 } from '../engine/math.js';
 
 const SpriteIndicatorEvents = ['moveto', 'dragging'];

@@ -1,7 +1,7 @@
 import SpriteWorkbench from './sprite-workbench.js';
 import AnimationDetails from './animation-details.js';
 import FramesetEditor from './frameset-editor.js';
-import { getDivWithClasses, bsHide } from './dom-utilities.js';
+import { getDivWithClasses, bsHide } from '../common/dom-utilities.js';
 
 const AnimationWorkbenchEvents = [];
 

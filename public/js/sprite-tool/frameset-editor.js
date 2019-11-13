@@ -1,10 +1,9 @@
-import eControl from './e-control.js';
-import { guid } from './guid.js';
-import { ItemType } from './item-type.js';
-import { getNodeIndex } from './dom-utilities.js';
+import eControl from '../common/e-control.js';
+import { guid } from '../common/guid.js';
+import { ItemType } from '../common/item-type.js';
+import { getNodeIndex, getDivWithClasses, removeChildren } from '../common/dom-utilities.js';
+import { setDataTransferData, getDataTransferData } from '../common/drag-and-drop-utilities.js';
 import { getAnimationMetaOrDefault } from './sprite-utilities.js';
-import { getDivWithClasses, removeChildren } from './dom-utilities.js';
-import { setDataTransferData, getDataTransferData } from './drag-and-drop-utilities.js';
 import { buildEditPanel, buildStaticLists, buildStaticListItem } from './builders.js';
 
 const FramesetEditorEvents = ['change'];

@@ -1,13 +1,17 @@
-import eControl from './e-control.js';
-import Modal from './modal.js';
+import eControl from '../common/e-control.js';
+import Modal from '../common/modal.js';
+import { guid } from '../common/guid.js';
+import { ItemType } from '../common/item-type.js';
+import { 
+    getDivWithClasses, 
+    getNodeIndex, 
+    removeChildren, 
+    findParent } from '../common/dom-utilities.js';
+import { getDataTransferData } from '../common/drag-and-drop-utilities.js';
 import { 
     buildStaticLists, 
     buildAnimationList, 
     buildEditPanel } from './builders.js';
-import { ItemType } from './item-type.js';
-import { getDivWithClasses, getNodeIndex, removeChildren, findParent } from './dom-utilities.js';
-import { guid } from './guid.js';
-import { getDataTransferData } from './drag-and-drop-utilities.js';
 
 const SpriteListEvents = ['add', 'remove', 'click', 'change'];
 

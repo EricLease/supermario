@@ -1,11 +1,11 @@
-import eControl from './e-control.js';
-import Modal from './modal.js';
+import eControl from '../common/e-control.js';
+import Modal from '../common/modal.js';
 import SpriteList from './sprite-list.js';
 import SpriteWorkbench from './sprite-workbench.js';
 import StaticWorkbench from './static-workbench.js';
 import AnimationWorkbench from './animation-workbench.js';
-import { ItemType } from './item-type.js';
-import { getDivWithClasses } from './dom-utilities.js';
+import { ItemType } from '../common/item-type.js';
+import { getDivWithClasses } from '../common/dom-utilities.js';
 
 const SpriteEditorEvents = [];
 const SpriteEditorWorkbenches = [StaticWorkbench, AnimationWorkbench];

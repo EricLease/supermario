@@ -1,17 +1,17 @@
-import eControl from './e-control.js';
+import eControl from '../common/e-control.js';
+import Modal from '../common/modal.js';
 import Timer from '../engine/timer.js';
-import Modal from './modal.js';
 import { 
     getDivWithClasses, 
     getButtonWithClasses, 
     getNumberInput, 
     bsHide,
     bsShow,
-    getInputWithClasses} from './dom-utilities.js';
-import { getAnimationMetaOrDefault } from './sprite-utilities.js';
+    getInputWithClasses} from '../common/dom-utilities.js';
+import { capitalize } from '../common/string-utilities.js';
+import { ItemType } from '../common/item-type.js';
 import { createAnimation } from '../engine/animation.js';
-import { ItemType } from './item-type.js';
-import { capitalize } from './string-utilities.js';
+import { getAnimationMetaOrDefault } from './sprite-utilities.js';
 
 const AnimationDetailsEvents = ['save', 'cancel', 'canceladd'];
 const EditItemScale = 2;

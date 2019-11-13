@@ -1,5 +1,5 @@
-import eControl from './e-control.js';
-import { bsHide, bsShow } from './dom-utilities.js';
+import eControl from '../common/e-control.js';
+import { bsHide, bsShow } from '../common/dom-utilities.js';
 
 const SpriteWorkbenchEvents = ['spritesupdated', 'canceladd'];
 
