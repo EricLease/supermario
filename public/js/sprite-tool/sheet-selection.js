@@ -1,7 +1,7 @@
 import eControl from '../common/e-control.js';
 import Modal from '../common/modal.js';
 import SpriteSheet from '../engine/sprite-sheet.js';
-import { loadClientImage, loadClientSpriteSheet } from './loaders.js';
+import { loadClientImage, loadClientSpriteSheet } from '../common/tools/loaders.js';
 import { buildStaticLists, buildAnimationList } from './builders.js';
 import { 
     bsHide, bsShow, bsToggle,    
@@ -11,15 +11,13 @@ import {
     getElementWithClasses, 
     getNumberInput,
     getInputWithClasses,
-    findParent } from '../common/dom-utilities.js';
+    findParent, extractFiles } from '../common/dom-utilities.js';
 import { capitalize } from '../common/string-utilities.js';
 import { ItemType } from '../common/item-type.js';
 
 const SheetSelectionEvents = [ 'sheetselected' ];
 const ExistingFileEmpty = 'Choose a sprite sheet...';
 const AssetSelectionEmpty = 'Choose an image asset...';
-const extractFiles = (e, p) => 
-    [...e.target.files].filter(f => f.type.match(p));
     
 function resetOpen() {
     const tiles = this.openPreviewLists.get('Tiles');

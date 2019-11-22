@@ -2,9 +2,9 @@ import Level from '../level.js';
 import { Matrix } from '../math.js';
 import { loadJSON } from './json.js';
 import { loadSpriteSheet } from './sprite-sheet.js';
-import { createSpriteLayer, createBackgroundLayer } from '../layers.js';
+import { createSpriteLayer, createBackgroundLayer, createTileGridLayer } from '../layers.js';
 
-function setupCollision(levelSpec, level) {
+export function setupCollision(levelSpec, level) {
     const mergedTiles = levelSpec.layers.reduce(
         (mergedTiles, layerSpec) => {
             return mergedTiles.concat(layerSpec.tiles);
@@ -14,7 +14,7 @@ function setupCollision(levelSpec, level) {
         createCollisionGrid(mergedTiles, levelSpec.patterns)); 
 }
 
-function setupBackgrounds(levelSpec, level, backgroundTiles) {
+export function setupBackgrounds(levelSpec, level, backgroundTiles, size) {
     levelSpec.layers.forEach(layer => {
         level.comp.layers.push(
             createBackgroundLayer(
@@ -22,11 +22,17 @@ function setupBackgrounds(levelSpec, level, backgroundTiles) {
                 createBackgroundGrid(
                     layer.tiles, 
                     levelSpec.patterns),
-                backgroundTiles));        
+                backgroundTiles, 
+                size));
     })
 }
 
-function setupEntities(levelSpec, level, entityFactory) {
+export function setupTileGrid(level, size, tileSize) {
+    level.comp.layers.push(createTileGridLayer(size, tileSize));
+    level.comp.layers.unshift(createTileGridLayer(size, tileSize, true));
+}
+
+export function setupEntities(levelSpec, level, entityFactory) {
     levelSpec.entities.forEach(({name, pos: [x, y]}) => {
          const createEntity = entityFactory[name];
          const entity = createEntity();

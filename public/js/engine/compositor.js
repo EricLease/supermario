@@ -4,7 +4,9 @@ export default class Compositor {
     }
 
     draw(context, camera) {
-        this.layers.forEach(
-            layer => layer(context, camera));
+        this.layers.forEach(async layer =>
+            layer[Symbol.toStringTag] === 'AsyncFunction'
+                ? await layer(context, camera)
+                : layer(context, camera));
     }
 }

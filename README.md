@@ -73,6 +73,17 @@ You will see it is being served at `localhost:5000` by default.
 * ### v0.9.0: server integration (data & asset storage, query api)
 * ### v1.0.0: PWA enhancements for offline mode
 
+# TODO (in v0.5.x)
+
+* ### Add sprite panel - tiles, patterns, entities tabs
+* ### Add layers panel - checkboxes to enable/disable layers
+* ### Enable tile drag and drop 
+    * add/move/remove 
+    * prevent editing when multiple layers visible?!!!?!!??
+* ### Create pattern editor mini-tool
+* ### Add entity loading support
+* ### Implement export
+
 &nbsp;
 
 # Credit:

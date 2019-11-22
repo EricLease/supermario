@@ -1,12 +1,14 @@
 import TileResolver from '../tile-resolver.js';
+import { Vec2 } from '../math.js';
 
-export function createBackgroundLayer(level, tiles, sprites) {
+export function createBackgroundLayer(level, tiles, sprites, size) {
     const resolver = new TileResolver(tiles);
     const buffer = document.createElement('canvas');
     const context = buffer.getContext('2d');
     
-    buffer.width = 256 + 16;
-    buffer.height = 240;
+    size = size || new Vec2(256 + 16, 240);
+    buffer.width = size.x;
+    buffer.height = size.y;
 
     function redraw(drawFrom, drawTo) {
         context.clearRect(0, 0, buffer.width, buffer.height);

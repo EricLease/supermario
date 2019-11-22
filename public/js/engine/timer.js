@@ -4,8 +4,12 @@ export default class Timer {
         let lastTime = 0;
         
         this.started = false;
-        this.updateProxy = (time) => {
-            this.started = true;
+        this.updateProxy = (time) => {            
+            if (!this.started) {
+                lastTime = time;
+                this.started = true;
+            }
+            
 
             if (this.paused) {
                 lastTime = time;
@@ -20,15 +24,26 @@ export default class Timer {
                 lastTime = time;
             }
             
+            this._handle = null;
             this.enqueue();
         }
     }
 
     enqueue() {
-        requestAnimationFrame(this.updateProxy);
+        if (this._handle) return;
+
+        this._handle = requestAnimationFrame(this.updateProxy);
     }
 
     start() { if (!this.started) this.enqueue(); }
     pause() { this.paused = true; }
     resume() { this.paused = false; this.start(); }
+    
+    stop() {   
+        if (!this.started || !this._handle) return;
+
+        window.cancelAnimationFrame(this._handle);
+        this._handle = null;
+        this.started = false;
+    }
 }

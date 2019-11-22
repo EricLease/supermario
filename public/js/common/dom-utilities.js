@@ -1,3 +1,6 @@
+export const extractFiles = (e, p) => 
+    [...e.target.files].filter(f => f.type.match(p));
+
 export function removeChildren(el) {
     while(el.firstChild) el.firstChild.remove();
 }
@@ -84,4 +87,16 @@ export function bsSwap(el1, el2) {
 
 export function bsToggle(el) {
     el.classList.toggle(BsHideClass);
+}
+
+export function debounce(fn) {
+    let timeout;
+
+    return function() {
+        if (timeout) {
+            window.cancelAnimationFrame(timeout);
+        }
+
+        timeout = window.requestAnimationFrame(fn);
+    };
 }

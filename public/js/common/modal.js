@@ -28,6 +28,7 @@ function setOptions(options, fallback) {
     fallback.footer.btnCancel = ifDef(fallback.footer.btnCancel, {});
 
     return {
+        depth: ifDef(options.depth, ifDef(fallback.depth, 1)),
         parent: options.parent, // this is determined during attach
         dismiss: ifDef(options.dismiss, ifDef(fallback.dismiss, null)),
 
@@ -252,6 +253,10 @@ Modal.prototype.attach = function(parentSelector) {
     eControl.prototype.attach.call(this, parentSelector);
     this.options.parent = parentSelector;
     $(this.container).modal('show');
+    let zIndexOffset = (this.options.depth - 1) * 10;
+    if(zIndexOffset > 0) zIndexOffset++;
+    this.container.style.zIndex = 1050+zIndexOffset;
+    this.container.nextSibling.style.zIndex = 1040+zIndexOffset;
     this.shown = true;
     this.listeners.get('opened').forEach(cb => cb());
 };

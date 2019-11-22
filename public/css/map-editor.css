@@ -2,6 +2,8 @@
     cursor: default;
 }
 
-body {
-    height: 5000px;
+.screen {
+    display: block;
+    margin: auto;
+    image-rendering: pixelated;
 }
