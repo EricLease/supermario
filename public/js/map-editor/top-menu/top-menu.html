@@ -1,24 +1,25 @@
-<nav class="navbar fixed-top navbar-expand-sm navbar-dark bg-dark">
-    <span class="navbar-brand">Map editor</span>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent">
-        <span class="navbar-toggler-icon"></span>
+<nav {{navBar}} class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark justify-content-sm-start">
+    <span class="navbar-brand ml-5">Map editor</span>
+    <button {{toggler}} class="navbar-toggler fixed left" type="button" data-toggle="collapse">
+        <i class="fas fa-cog"></i>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-                File
-            </a>
-            <div class="dropdown-menu">                
-                <a {{newMap}} class="dropdown-item new-map" href="#">New</a>
-                <a {{openMap}} class="dropdown-item open-map" href="#">Open</a>
-                <div class="dropdown-divider"></div>
-                <a {{saveMap}} class="dropdown-item save-map disabled" href="#">Save</a>
-                <a {{saveMapAs}} class="dropdown-item save-map-as disabled" href="#">Save as...</a>
-                <div class="dropdown-divider"></div>
-                <a {{closeMap}} class="dropdown-item close-map disabled" href="#">Close</a>
-            </div>
-        </li>
+    <div {{content}} class="bg-semi-dark toolbar d-flex flex-column flex-lg-row flex-xl-row justify-content-lg-end p-3 mt-6">
+        <ul class="navbar-nav align-self-stretch">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                    File
+                </a>
+                <div class="dropdown-menu">                
+                    <a {{newMap}} class="dropdown-item new-map" href="#">New</a>
+                    <a {{openMap}} class="dropdown-item open-map" href="#">Open</a>
+                    <div class="dropdown-divider"></div>
+                    <a {{saveMap}} class="dropdown-item save-map disabled" href="#">Save</a>
+                    <a {{saveMapAs}} class="dropdown-item save-map-as disabled" href="#">Save as...</a>
+                    <div class="dropdown-divider"></div>
+                    <a {{closeMap}} class="dropdown-item close-map disabled" href="#">Close</a>
+                </div>
+            </li>
+        </ul>
     </div>
 </nav>

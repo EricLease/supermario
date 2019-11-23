@@ -4,9 +4,7 @@ const TopMenuEvents = ['newmap', 'openmap', 'savemap', 'savemapas', 'closemap'];
 
 export default class TopMenu extends mControl {
     constructor(state, container) { 
-        super('top-menu', container, TopMenuEvents);
-        
-        this.state = state;
+        super('top-menu', state, container, TopMenuEvents);
     }
 
     bind() {
@@ -20,12 +18,14 @@ export default class TopMenu extends mControl {
             if (!await this.raiseAsync(evtName)) return;
             enableSaveClose();
         };
-        const height = this.container
-            .querySelector('nav')
-            .getBoundingClientRect()
-            .height;
-
-        document.body.style.marginTop = `${height}px`;
+        const fixHeight = () => {
+            const ul = this.children.content.querySelector('ul');
+            const navH = `${this.children.navBar.getBoundingClientRect().height}px`;
+            
+            ul.style.maxHeight = ul.style.height = `calc(100vh - ${navH})`;
+            document.body.style.marginTop = navH;
+        };
+        
         this.children.newMap
             .addEventListener('click', async () => await raise('newmap'));
         this.children.openMap
@@ -35,6 +35,12 @@ export default class TopMenu extends mControl {
         this.children.saveMapAs
             .addEventListener('click', async () => await raise('savemapas'));
         this.children.closeMap
-            .addEventListener('click', async () => await raise('closemap'));        
+            .addEventListener('click', async () => await raise('closemap'));
+        this.children.toggler.addEventListener('click', () => {
+            this.children.content.classList.toggle('open');
+            fixHeight();
+        });
+
+        fixHeight();
     }
 }

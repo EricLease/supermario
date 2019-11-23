@@ -5,7 +5,7 @@ const DialogEvents = [];
 
 export default class Dialog extends mControl {
     constructor (ctlName, modalOptions) {
-        super(`dialogs/${ctlName}`, null, DialogEvents);
+        super(`dialogs/${ctlName}`, {}, null, DialogEvents);
         
         this.options = _.merge({
             header: { show: false },

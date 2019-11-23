@@ -1,8 +1,9 @@
 import Modal from '../common/modal.js';
-import TopMenu from './top-menu/top-menu.js';
-import Level from '../engine/level.js';
 import NewMapDialog from './dialogs/new-map/new-map.js';
+import TopMenu from './top-menu/top-menu.js';
+import Toolbox from './toolbox/toolbox.js';
 import Screen from './screen/screen.js';
+import Level from '../engine/level.js';
 import { dirtyCheck } from '../common/modal-utilities.js';
 import { getInputWithClasses, extractFiles } from '../common/dom-utilities.js';
 import { loadJSON, loadSpriteSheet } from '../engine/loaders.js';
@@ -102,11 +103,14 @@ async function main() {
         fileOpen: false
     };
     const modal = new Modal();
-    const topMenu = new TopMenu(state, '.editor');
     const newMapDialog = new NewMapDialog();
+    const topMenu = new TopMenu(state, '.editor');
     let level, levelSpec, mapName, sprites, screen;
 
     await topMenu.load();
+    const toolbox = new Toolbox(state, topMenu.children.navBar);
+    await toolbox.load();
+
     topMenu.addEventListener('newmap', async (evt) => await newMap(evt));
     topMenu.addEventListener('openmap', async (evt) => await openMap(evt));
     topMenu.addEventListener('savemap', async (evt) => await saveMap(evt));

@@ -26,17 +26,17 @@ function interpolate(mCtl, raw) {
 }
 
 export default class mControl {
-    constructor(ctlPathName, container, ...events) {
+    constructor(ctlPathName, state, container, ...events) {
         const parts = ctlPathName.split('/');
 
         this.ctlName = parts[parts.length - 1];        
         this.ctlPath = ctlPathName;
-        this.container = container instanceof Element
-            ? container : document.querySelector(container);
-        this.state = {
+        this.state = _.merge(state, {
             loaded: false,
             bound: false
-        };
+        });
+        this.container = container instanceof Element
+            ? container : document.querySelector(container);
         this.listeners = new Map();
         Events.concat((events || []).flat()).forEach(
             e => this.listeners.set(e, []));

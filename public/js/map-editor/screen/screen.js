@@ -8,9 +8,8 @@ const ScreenEvents = [];
 
 export default class Screen extends mControl {
     constructor(state, container, level, levelSpec, sprites) { 
-        super('screen', container, ScreenEvents);
+        super('screen', state, container, ScreenEvents);
         
-        this.state = state;
         this.camera = new Camera();
         this.timer = new Timer();
         this.level = level;

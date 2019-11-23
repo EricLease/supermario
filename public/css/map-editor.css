@@ -1,9 +1,87 @@
+/*#region Misc boostrap tweaks and extensions*/
+
 .navbar-brand {
     cursor: default;
 }
+
+.bg-semi-dark {
+    background-color:rgba(0,0,0,0.5);
+}
+
+.mt-6 {
+    margin-top: 3.5rem!important;
+}
+
+/*#endregion Misc boostrap tweaks and extensions */
+
+/*#region Toolbar and Toolbox */
+
+.toolbox {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+    transition: all ease 0.25s;
+}
+
+
+.toolbar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    left: 0;
+    transform: translateX(-100%);
+    transition: all ease 0.25s;
+}
+
+.toolbox.open,
+.toolbar.open {
+    transform: translateX(0);
+}
+
+.toolbox .navbar-nav,
+.toolbar .navbar-nav {
+    overflow-y: auto;
+}
+
+.navbar button.fixed {
+    position: fixed;
+    top: 10px;
+}
+
+.navbar button.fixed.left {
+    left: 10px;
+}
+
+.navbar button.fixed.right {
+    right: 10px;
+}
+
+@media (min-width: 576px) {
+    .navbar-expand-lg .navbar-toggler.fixed {
+        display: inline-block;
+    }
+}
+
+@media (min-width: 992px) {
+    div.toolbox div.dropdown-menu.show,
+    div.toolbar div.dropdown-menu.show {
+        position: static;
+    }
+}
+
+/*#endregion Toolbar and Toolbox */
+
+/*#region Screen */
 
 .screen {
     display: block;
     margin: auto;
     image-rendering: pixelated;
 }
+
+/*#endregion Screen */
