@@ -43,8 +43,8 @@
     transform: translateX(0);
 }
 
-.toolbox .navbar-nav,
-.toolbar .navbar-nav {
+.toolbox,
+.toolbar {
     overflow-y: auto;
 }
 

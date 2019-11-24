@@ -9,9 +9,9 @@ export default class Toolbox extends mControl {
 
     bind() {
         const fixHeight = () => {
-            const ul = this.children.mainPanel.querySelector('ul');
+            const div = this.children.mainPanel;
             
-            ul.style.maxHeight = ul.style.height
+            div.style.maxHeight = div.style.height
                 = `calc(100vh - ${this.container.getBoundingClientRect().height}px)`;
         };
 

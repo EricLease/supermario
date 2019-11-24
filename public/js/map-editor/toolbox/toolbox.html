@@ -3,23 +3,30 @@
 </button>
 
 <div {{mainPanel}} class="bg-semi-dark toolbox d-flex flex-column p-3 mt-6">
-    <ul class="navbar-nav align-self-stretch flex-column">
+    <ul {{testing3:repeat:2}} class="navbar-nav align-self-stretch flex-column">
         <li class="nav-item active">
             <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
         </li>
-        <li>
+        <li {{:repeat:4}}>
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 Dropdown
             </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">Action</a>
+            <div {{:repeat:2}} class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a {{testing1}} class="dropdown-item" href="#">
+                    <span {{muliAction:repeat:3}}>ACTION!</span>
+                </a>
                 <a class="dropdown-item" href="#">Another action</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Something else here</a>
+                <div {{:repeat:10}} class="dropdown-divider"></div>
+                <a {{testing2:repeat:2}} class="dropdown-item" href="#">
+                    <span {{mySpan:repeat:2}}>SpanIt</span>
+                </a>
             </div>
         </li>
-        <li class="nav-item">
+        <li {{outter:repeat:7}} class="nav-item">
             <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+            <ul>
+                <li {{inner:repeat:4}}>Hey</li>
+            </ul>
         </li>
     </ul>
 </div>
