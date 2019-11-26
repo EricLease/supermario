@@ -1,7 +1,7 @@
 import { guid } from '../common/guid.js';
 
 const Events = ['loaded', 'bound', 'unloaded']
-const InterpolationElements = new RegExp(/{{([:\w]*)}}/g);
+const InterpolationElements = new RegExp(/{{([^}]*)}}/g);
 const FindTagBeginRegex = new RegExp(/<\s*(\w*)\s*/);
 const TagBeginRegexPattern = (tag) => `<\\s*${tag}`;
 const TagEndRegexPattern = (tag) => `<\\/\\s*${tag}\\s*>`;
@@ -12,6 +12,13 @@ const IdPartIndex = 0;
 const CommandPartIndex = 1;
 // Command specific part indexes
 const RepeatCountPartIndex = 2;
+
+const getMatchPart = (match, idx) => 
+    idx >= 0 && match && match.parts && match.parts.length > idx
+        ? match.parts[idx] : null;
+const getIdFromMatch = match => getMatchPart(match, IdPartIndex);
+const getCommandFromMatch = match => getMatchPart(match, CommandPartIndex);
+
 /**
  * Courtesy of https://stackoverflow.com/a/31989913/4342563. Slightly modified.
  * 
@@ -49,64 +56,91 @@ const matchRecursive = (str, tag, flags) => {
 
     return a;
 };
-    
-function interpolate(mCtl, raw) {
-    const makeStandalone = name => `{{${name}}}`;
-    const extractMatches = (search) => {
-        const processMatch = m => {
-            return {
-                raw: m[RawMatchIndex],
-                parts: m[ContentMatchIndex].split(CommandPartDelimeter),
-                index: m.index
-            };
-        };
-        const iterator = search.matchAll(InterpolationElements);
-        const matches = [];
-        let curr;
 
-        while (!(curr = iterator.next()).done) {
-            matches.push(processMatch(curr.value));
+const extractDomEl = (search, matchIndex) => {
+    const beginIdx = search.substr(0, matchIndex).lastIndexOf('<');
+    const partial = search.substr(beginIdx);
+    const tag = partial.match(FindTagBeginRegex)[ContentMatchIndex];
+    const match = matchRecursive(partial, tag);
+    const len = match[RawMatchIndex].length;
+
+    return [beginIdx, beginIdx + len, search.substr(beginIdx, len)];
+};
+
+const extractMatches = search => {
+    const processMatch = m => {
+        return {
+            raw: m[RawMatchIndex],
+            parts: m[ContentMatchIndex].split(CommandPartDelimeter),
+            index: m.index
+        };
+    };
+    const iterator = search.matchAll(InterpolationElements);
+    const matches = [];
+    let curr;
+
+    while (!(curr = iterator.next()).done) {
+        matches.push(processMatch(curr.value));
+    }
+
+    // NOTE: reversing the order of match set
+    // Process template from bottom to top -> easy string replaces
+    return matches.reverse();
+};
+
+const extractChildMatches = search =>
+    extractMatches(search.substr(search.indexOf('>')));
+
+const extractFromMatches = (matches, reducer, initial = [], clone = false) => {
+    const result = matches.reduce(reducer, initial);
+
+    return clone
+        ? result.map(i => _.clone(matches[i]))
+        : result.reverse().flatMap(i => matches.splice(i, 1)).reverse();
+};
+
+const extractCommandType = (matches, type = null, initial = [], clone = false) =>
+    extractFromMatches(matches, (cmds, c, i) => {
+        if ((!type && c.parts.length > CommandPartIndex) ||
+            (type && getCommandFromMatch(c) === type)) {
+            cmds.push(i);
         }
 
-        return matches;
-    };
+        return cmds;
+    }, initial, clone);
+
+const extractCommands = (matches, initial = [], clone = false) =>
+    extractCommandType(matches, null, initial, clone);
+const getCommands = (matches, initial = []) =>
+    extractCommands(matches, initial, clone);
+
+const extractPlaceholders = (matches, initial = [], clone = false) =>
+    extractCommandType(matches, 'placeholder', initial, clone);
+const getPlaceholders = (matches, initial = []) =>
+    extractPlaceholders(matches, initial, true);
+
+const extractRepeats = (matches, initial = [], clone = false) =>
+    extractCommandType(matches, 'repeat', initial, clone);
+const getRepeats = (matches, initial = []) =>
+    extractRepeats(matches, initial, true);        
+
+async function interpolate(mCtl, raw) {
+    const makeStandalone = name => `{{${name}}}`;    
     const idsUnique = () => matches.reduce((p, c, i) => {
         const oldP = p;
-        const id = getId(c);
+        const id = getIdFromMatch(c);
 
-        p = p === false || p.indexOf(id) > -1
-            ? false : p + id, '';            
+        p = p === false || p.indexOf(`|${id}|`) > -1
+            ? false : `${p}|${id}|`;
         
         if (oldP && !p) offender = id;
 
         return p;
     }, '');
-    const getId = m => m.parts[IdPartIndex];
-    const getCommand = m => m.parts[CommandPartIndex];
-    const processCommands = () => {
-        // NOTE: reversing the order of command processing
-        // - maintains integrity of raw html between commands
-        // - supports cascading commands (e.g. `repeat`)
-        // - perform reverse before splice to maintain `matches` integrity
-        const extractCommands = () => matches
-            .reduce((cmds, m, i) => {
-                if (m.parts.length > 1) cmds.push(i);
-                return cmds;
-            }, [])
-            .reverse()
-            .flatMap(i => matches.splice(i, 1));
-        const process = (c, i) => {
+    const processCommands = async () => {
+        const process = async (c, i) => {
             //#region Commands
             const repeat = () => {
-                const extractDomEl = () => {
-                    const beginIdx = raw.substr(0, c.index).lastIndexOf('<');
-                    let partial = raw.substr(beginIdx);
-                    const tag = partial.match(FindTagBeginRegex)[ContentMatchIndex];
-                    const match = matchRecursive(partial, tag);
-                    const endIdx = beginIdx + match[RawMatchIndex].length;
-
-                    return [beginIdx, endIdx, raw.slice(beginIdx, endIdx)];
-                };
                 const dupe = (orig, newId) => {
                     const m = _.clone(orig);
 
@@ -117,19 +151,22 @@ function interpolate(mCtl, raw) {
                     return m;
                 };
                 const hasId = id.length;
-                const cnt = c.parts[RepeatCountPartIndex];
-                const [beginIdx, endIdx, domEl] = extractDomEl();
                 const instances = [];
-                const childInterps = extractMatches(domEl.substr(domEl.indexOf('>')));
-                const childMatches = childInterps.reduce((ms, c) => {
-                    const mIdx = matches.findIndex(m => m.raw === c.raw);                        
-                    if (mIdx > -1) ms.push(matches.splice(mIdx, 1));
-                    return ms;
-                }, []).flat();
+                const cnt = c.parts.length > RepeatCountPartIndex
+                    ? parseInt(c.parts[RepeatCountPartIndex]) : 1;
+                const [beginIdx, endIdx, domEl] = extractDomEl(raw, c.index);
+                const temp = extractChildMatches(domEl);
+                const childMatches = temp
+                    .reduce((ms, c) => {
+                        const mIdx = matches.findIndex(m => m.raw === c.raw);
+                        if (mIdx > -1) ms.push(matches.splice(mIdx, 1));
+                        return ms;
+                    }, [])
+                    .flat();
                     
-                for (let i = 0; i < cnt; i++) {                    
+                for (let i = 0; i < cnt; i++) {
                     const adjustChild = (cm) => {
-                        const newId = `${instanceId}_${getId(cm)}`;
+                        const newId = `${instanceId}_${getIdFromMatch(cm)}`;
                         const newChild = dupe(cm, newId);
     
                         instance = instance.replace(cm.raw, newChild.raw);
@@ -143,53 +180,68 @@ function interpolate(mCtl, raw) {
                 }
 
                 raw = `${
-                    raw.slice(0, beginIdx - 1)}${
+                    raw.slice(0, beginIdx - (beginIdx === 0 ? 0 : 1))}${
                     instances.join('')}${
-                    raw.slice(endIdx + 1)}`;
-            }
-            //#endregion Commands
-            const id = getId(c);
+                    raw.slice(endIdx + (endIdx + 1 < raw.length ? 1 : 0))}`;
+            };
+            const placeholder = async () => {
+                const replace = await mCtl.placeholder(id);
+                const endIdx = c.index + c.raw.length;
 
-            switch (getCommand(c)) {
+                raw = `${raw.slice(0, c.index)}${replace}${raw.slice(endIdx)}`;
+            };
+            //#endregion Commands
+            const id = getIdFromMatch(c);
+            const command = getCommandFromMatch(c);
+
+            switch (command) {
                 case 'repeat': repeat(); break;
+                case 'placeholder': await placeholder(); break;
                 
                 default:
-                    throw new Error(`Unhandled interpolation command (${parts[0]})`);
+                    throw new Error(`Unhandled interpolation command (${command})`);
             }
         };
 
-        extractCommands().forEach(process);
+        const commands = extractCommands(matches);
+        const placeholders = extractPlaceholders(commands);
+
+        if (placeholders.length) {
+            await Promise.all(
+                placeholders.map(
+                    (p, i) => (async () => await process(p, i))()));
+
+            return false;
+        }
+        
+        commands.forEach(process);
+
+        return true;
     };
     const setChild = m => {
         const setChildId = (container, idx) => {
-            const id = `${fullId}_${mCtl.guid}`;            
+            const id = `${fullId}_${mCtl.guid}`;
 
-            container[idx] = id;
+            container[idx] = { [Symbol.for('id')]: id };
             raw = raw.replace(m.raw, `id="${id}"`);
         }
         const initAndUpdateContext = (key) => {
-            ctx[key] = ctx[key] || [];
-            parent = ctx;
-            ctx = ctx[key];
+            parent = ctx;            
+            parent[key] = parent[key] || {};
+            ctx = parent[key];
 
             if (typeof ctx === 'string' && ctx) {
-                parent[key] = { [Symbol.for('id')]: ctx };
-                ctx = parent[key];
+                ctx = { [Symbol.for('id')]: ctx };
+                parent[key] = ctx;
             }
         };
         const unrollDimensions = () => {
             while (dimensions.length) {
-                if (!(ctx instanceof Array) &&
-                    !(ctx instanceof Object)) {
-                    parent[name] = [];
-                    ctx = parent[name];
-                }
-            
                 initAndUpdateContext(dimensions.shift());
             }
         };
-        const fullId = getId(m);
-        const parts = fullId.split('_');//.filter(Boolean);
+        const fullId = getIdFromMatch(m);
+        const parts = fullId.split('_');
         let name = '', dimensions = [], parent = mCtl, ctx = parent.children;
 
         while (parts.length) {
@@ -198,18 +250,16 @@ function interpolate(mCtl, raw) {
             if (!isNaN(part) && part !== '') {
                 const idx = parseInt(part);
             
-                if (!name) {
-                    dimensions.push(idx);
-                    continue;
-                }
+                dimensions.push(idx);
+                    
+                if (!name) continue;
                 
                 unrollDimensions();
-                initAndUpdateContext(idx);
                     
                 if (parts.length) name = '';
                 else setChildId(parent, idx);
                 continue;
-            } 
+            }
             
             name = part;
 
@@ -236,9 +286,7 @@ function interpolate(mCtl, raw) {
     let offender;
 
     if (!matches.length) return raw;
-
-    processCommands();
-
+    if (!await processCommands()) return await interpolate(mCtl, raw);
     if (!matches.length) return raw;
 
     if (!idsUnique()) {
@@ -247,13 +295,15 @@ function interpolate(mCtl, raw) {
     }
 
     mCtl.children = {};
-    matches.forEach(setChild);
+    // sort to ensure containers are set before their children
+    matches.sort((a, b) => (a.raw < b.raw ? 1 : -1))
+        .forEach(setChild);
 
     return raw;
 }
 
 export default class mControl {
-    constructor(ctlPathName, state, container, ...events) {
+    constructor(ctlPathName, state, container, placeholders, ...events) {
         const parts = ctlPathName.split('/');
 
         this.ctlName = parts[parts.length - 1];        
@@ -265,15 +315,60 @@ export default class mControl {
         });
         this.container = container instanceof Element
             ? container : document.querySelector(container);
+        this.placeholders = new Map();
+        placeholders.forEach(p => this.placeholders.set(p, null));
         this.listeners = new Map();
         Events.concat((events || []).flat()).forEach(
             e => this.listeners.set(e, []));
     }
 
-    bind() {}
+    bind() { }
+
+    async placeholder(id) {
+        // All interpolation elements that have IDs and are children of `repeat` 
+        // interpolation commands that have IDs will be removed them from the set
+        // of matches that will have the prefix prepended. This should prevent the 
+        // prefix from being repeated throughout the nested interpolation elements' ids.
+        const getRepeatChildren = () => [...new Set(
+            getRepeats(matches)
+                .filter(r => getIdFromMatch(r))
+                .flatMap(r => extractChildMatches(extractDomEl(raw, r.index)[2]))
+        )];
+
+        if (!this.placeholders.has(id)) return '';
+        
+        const ph = this.placeholders.get(id);
+
+        if (!ph) return '';
+        if (ph.raw) return ph.raw;
+        
+        const resp = await fetch(`/js/map-editor/${ph.path}/${ph.name}.html`);
+        const raw = await resp.text();
+        const matches = extractMatches(raw);
+        const toRemove = getRepeatChildren();
+
+        // TODO: Determine how to handle nested placeholders:
+        //extractPlaceholders(matches); // discard?
+        
+        // extract and discard certain repeat children
+        extractFromMatches(matches, (cmds, c, i) => {
+            if (toRemove.find(r => r.raw === c.raw)) cmds.push(i);
+            return cmds;
+        });
+
+        ph.raw = matches.reduce((raw, m) =>
+            !m.parts[0].length
+                ? raw
+                : raw.substr(0, m.index) 
+                + `{{${id}_${m.parts.join(':')}}}`
+                + raw.substr(m.index + m.raw.length),
+            raw);
+
+        return ph.raw;
+    }
 
     async load() { 
-        const setChildren = (ctx) => {
+        const setChildren = (ctx = this.children) => {
             for (const child in ctx) {
                 const c = ctx[child];
 
@@ -292,7 +387,7 @@ export default class mControl {
             }
         };
         const resp = await fetch(`/js/map-editor/${this.ctlPath}/${this.ctlName}.html`);
-        const raw = interpolate(this, await resp.text());
+        const raw = await interpolate(this, await resp.text());
         const parser = new DOMParser();
         const html = parser.parseFromString(raw, 'text/html');
         let el = html.body.firstElementChild;
@@ -304,7 +399,7 @@ export default class mControl {
         }
 
         this.children = this.children || {};
-        setChildren(this.children);            
+        setChildren();            
         this.state.loaded = true;
         this.listeners.get('loaded').forEach(cb => cb());
         this.bind();

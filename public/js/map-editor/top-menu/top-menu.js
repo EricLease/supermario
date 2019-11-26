@@ -1,10 +1,11 @@
 import mControl from '../m-control.js';
 
 const TopMenuEvents = ['newmap', 'openmap', 'savemap', 'savemapas', 'closemap'];
+const TopMenuPlaceholders = [];
 
 export default class TopMenu extends mControl {
     constructor(state, container) { 
-        super('top-menu', state, container, TopMenuEvents);
+        super('top-menu', state, container, TopMenuPlaceholders, TopMenuEvents);
     }
 
     bind() {
@@ -19,10 +20,10 @@ export default class TopMenu extends mControl {
             enableSaveClose();
         };
         const fixHeight = () => {
-            const ul = this.children.content.querySelector('ul');
+            const div = this.children.content;
             const navH = `${this.children.navBar.getBoundingClientRect().height}px`;
             
-            ul.style.maxHeight = ul.style.height = `calc(100vh - ${navH})`;
+            div.style.maxHeight = div.style.height = `calc(100vh - ${navH})`;
             document.body.style.marginTop = navH;
         };
         

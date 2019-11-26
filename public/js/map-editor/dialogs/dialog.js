@@ -2,10 +2,11 @@ import Modal from '../../common/modal.js'
 import mControl from '../m-control.js';
 
 const DialogEvents = [];
+const DialogPlaceholders = [];
 
 export default class Dialog extends mControl {
     constructor (ctlName, modalOptions) {
-        super(`dialogs/${ctlName}`, {}, null, DialogEvents);
+        super(`dialogs/${ctlName}`, {}, null, DialogPlaceholders, DialogEvents);
         
         this.options = _.merge({
             header: { show: false },

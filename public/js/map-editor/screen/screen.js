@@ -5,10 +5,11 @@ import { setupCollision, setupBackgrounds, setupTileGrid } from '../../engine/lo
 import { debounce } from '../../common/dom-utilities.js';
 
 const ScreenEvents = [];
+const ScreenPlaceholders = [];
 
 export default class Screen extends mControl {
     constructor(state, container, level, levelSpec, sprites) { 
-        super('screen', state, container, ScreenEvents);
+        super('screen', state, container, ScreenPlaceholders, ScreenEvents);
         
         this.camera = new Camera();
         this.timer = new Timer();

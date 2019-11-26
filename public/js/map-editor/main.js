@@ -1,7 +1,7 @@
 import Modal from '../common/modal.js';
 import NewMapDialog from './dialogs/new-map/new-map.js';
 import TopMenu from './top-menu/top-menu.js';
-import Toolbox from './toolbox/toolbox.js';
+import { SpritesToolbox, LayersToolbox } from './toolbox/toolboxes.js';
 import Screen from './screen/screen.js';
 import Level from '../engine/level.js';
 import { dirtyCheck } from '../common/modal-utilities.js';
@@ -104,18 +104,24 @@ async function main() {
     };
     const modal = new Modal();
     const newMapDialog = new NewMapDialog();
-    const topMenu = new TopMenu(state, '.editor');
     let level, levelSpec, mapName, sprites, screen;
 
+    const topMenu = new TopMenu(state, '.editor');
     await topMenu.load();
-    const toolbox = new Toolbox(state, topMenu.children.navBar);
-    await toolbox.load();
+
+    const spritesToolbox = new SpritesToolbox(state, topMenu.children.navBar);
+    const layersToolbox = new LayersToolbox(state, topMenu.children.navBar);
+    // TODO: group toolboxes into toolbox manager
+    await Promise.all([spritesToolbox.load(), layersToolbox.load()]);
 
     topMenu.addEventListener('newmap', async (evt) => await newMap(evt));
     topMenu.addEventListener('openmap', async (evt) => await openMap(evt));
     topMenu.addEventListener('savemap', async (evt) => await saveMap(evt));
     topMenu.addEventListener('savemapas', async (evt) => await saveMapAs(evt));
     topMenu.addEventListener('closemap', async (evt) => await closeMap(evt));
+
+    window.spritesToolbox = spritesToolbox;
+    window.layersToolbox = layersToolbox;
 }
 
 document.addEventListener('DOMContentLoaded', main);
