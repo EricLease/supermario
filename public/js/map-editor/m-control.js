@@ -1,10 +1,27 @@
+import $$ from '../common/symbol-store.js';
 import { guid } from '../common/guid.js';
 
-const Events = ['loaded', 'bound', 'unloaded']
+// TODO: move to string utilities
+const replaceSection = (search, replace, start, end) => 
+    `${search.substring(0, start)}${replace}${search.substring(end)}`;
+const removeSection = (search, start, end) => 
+    replaceSection(search, '', start, end);
+   
+//#region Interpolation
+
+//#region RegExp utilities
+
+const TagBeginRegexPattern = tag => `<\\s*${tag}`;
+const TagEndRegexPattern = tag => `<\\/\\s*${tag}\\s*>`;
+
+//#endregion RegExp utilities
+
+//#region Configuration
+
+// TODO: Load config from json
+
 const InterpolationElements = new RegExp(/{{([^}]*)}}/g);
 const FindTagBeginRegex = new RegExp(/<\s*(\w*)\s*/);
-const TagBeginRegexPattern = (tag) => `<\\s*${tag}`;
-const TagEndRegexPattern = (tag) => `<\\/\\s*${tag}\\s*>`;
 const RawMatchIndex = 0;
 const ContentMatchIndex = 1;
 const CommandPartDelimeter = ':';
@@ -13,11 +30,41 @@ const CommandPartIndex = 1;
 // Command specific part indexes
 const RepeatCountPartIndex = 2;
 
+//#endregion Configuration
+
+//#region Matches utilities
+
+// TODO: Refactor this into a class/service/set of functions
+
+const cloneMatch = (origMatch, newId, matches) => {
+    const m = _.clone(origMatch);
+
+    m.raw = makeStandalone(newId);
+    m.parts = [newId];
+    matches.push(m);
+
+    return m;
+};
+
 const getMatchPart = (match, idx) => 
     idx >= 0 && match && match.parts && match.parts.length > idx
         ? match.parts[idx] : null;
 const getIdFromMatch = match => getMatchPart(match, IdPartIndex);
 const getCommandFromMatch = match => getMatchPart(match, CommandPartIndex);
+
+const firstDuplicateID = matches => {
+    const set = new Set();
+
+    for (let i = 0; i < matches.length; i++) {
+        const id = getIdFromMatch(matches[i]);
+
+        if (set.has(id)) return id;
+
+        set.add(id);
+    }
+
+    return null;
+};
 
 /**
  * Courtesy of https://stackoverflow.com/a/31989913/4342563. Slightly modified.
@@ -47,7 +94,7 @@ const matchRecursive = (str, tag, flags) => {
                 if (!t++) s = x.lastIndex - m[0].length;
             } else if (t) {
                 if (!--t) {
-                    a.push(str.slice(s, m.index + m[0].length));
+                    a.push(str.substring(s, m.index + m[0].length));
                     if (!g) return a;
                 }
             }
@@ -57,14 +104,14 @@ const matchRecursive = (str, tag, flags) => {
     return a;
 };
 
-const extractDomEl = (search, matchIndex) => {
-    const beginIdx = search.substr(0, matchIndex).lastIndexOf('<');
-    const partial = search.substr(beginIdx);
+const findDomEl = (search, matchIndex) => {
+    const start = search.substr(0, matchIndex).lastIndexOf('<');
+    const partial = search.substr(start);
     const tag = partial.match(FindTagBeginRegex)[ContentMatchIndex];
     const match = matchRecursive(partial, tag);
     const len = match[RawMatchIndex].length;
-
-    return [beginIdx, beginIdx + len, search.substr(beginIdx, len)];
+    
+    return [search.substr(start, len), start, start + len];
 };
 
 const extractMatches = search => {
@@ -91,28 +138,46 @@ const extractMatches = search => {
 const extractChildMatches = search =>
     extractMatches(search.substr(search.indexOf('>')));
 
-const extractFromMatches = (matches, reducer, initial = [], clone = false) => {
-    const result = matches.reduce(reducer, initial);
+const extractFromMatches =
+    (matches, reducer, initial = [], clone = false) => {
+        const result = matches.reduce(reducer, initial);
 
-    return clone
-        ? result.map(i => _.clone(matches[i]))
-        : result.reverse().flatMap(i => matches.splice(i, 1)).reverse();
-};
+        return clone
+            ? result.map(i => _.clone(matches[i]))
+            : result.reverse().flatMap(i => matches.splice(i, 1)).reverse();
+    };
 
-const extractCommandType = (matches, type = null, initial = [], clone = false) =>
-    extractFromMatches(matches, (cmds, c, i) => {
-        if ((!type && c.parts.length > CommandPartIndex) ||
-            (type && getCommandFromMatch(c) === type)) {
-            cmds.push(i);
-        }
+const takeFromMatches =
+    (matches, takeFn, initial = [], clone = false) =>
+        extractFromMatches(
+            matches,
+            (take, m, i) => { if (takeFn(m)) take.push(i); return take; },
+            initial,
+            clone);
 
-        return cmds;
-    }, initial, clone);
+const extractListFromMatches =
+    (sourceMatches, removeMatches, initial = [], clone = false) =>
+        takeFromMatches(
+            sourceMatches,
+            s => removeMatches.find(r => r.raw === s.raw),
+            initial,
+            clone);            
+
+const extractCommandType =
+    (sourceMatches, type = null, initial = [], clone = false) =>
+        takeFromMatches(
+            sourceMatches,
+            s => (!type && s.parts.length > CommandPartIndex)
+                || (type && getCommandFromMatch(s) === type),
+            initial,
+            clone);
 
 const extractCommands = (matches, initial = [], clone = false) =>
     extractCommandType(matches, null, initial, clone);
 const getCommands = (matches, initial = []) =>
     extractCommands(matches, initial, clone);
+
+//#region Command specific
 
 const extractPlaceholders = (matches, initial = [], clone = false) =>
     extractCommandType(matches, 'placeholder', initial, clone);
@@ -122,83 +187,89 @@ const getPlaceholders = (matches, initial = []) =>
 const extractRepeats = (matches, initial = [], clone = false) =>
     extractCommandType(matches, 'repeat', initial, clone);
 const getRepeats = (matches, initial = []) =>
-    extractRepeats(matches, initial, true);        
+    extractRepeats(matches, initial, true);  
+
+const getRepeatCount = (m, mCtl) => {
+    let cnt, part;
+
+    cnt = m.parts.length < RepeatCountPartIndex
+        ? 'none specified'
+        : !isNaN(cnt =
+            parseInt(part =
+                m.parts[RepeatCountPartIndex]))
+            ? cnt
+            : !isNaN(cnt = parseInt(mCtl[part]))
+                ? cnt
+                : `unrecognized variable [${part}]`;
+    
+    if (isNaN(cnt) || cnt < 0) {
+        throw new Error(`Invalid repeat count (${cnt}) @ ${m.index}`);
+    }
+
+    return cnt;
+};
+
+//#endregion Command specific
+
+//#endregion Matches utilities
+
+// TODO: Refactor this into a class (Interpolator)
+
+const makeStandalone = name => `{{${name}}}`;
 
 async function interpolate(mCtl, raw) {
-    const makeStandalone = name => `{{${name}}}`;    
-    const idsUnique = () => matches.reduce((p, c, i) => {
-        const oldP = p;
-        const id = getIdFromMatch(c);
-
-        p = p === false || p.indexOf(`|${id}|`) > -1
-            ? false : `${p}|${id}|`;
-        
-        if (oldP && !p) offender = id;
-
-        return p;
-    }, '');
     const processCommands = async () => {
-        const process = async (c, i) => {
+        const process = async (c) => {
             //#region Commands
+
             const repeat = () => {
-                const dupe = (orig, newId) => {
-                    const m = _.clone(orig);
-
-                    m.raw = makeStandalone(newId);
-                    m.parts = [newId];
-                    matches.push(m);
-
-                    return m;
-                };
-                const hasId = id.length;
+                const repeatCnt = getRepeatCount(c, mCtl);
+                const [domEl, start, end] = findDomEl(raw, c.index);
+                
+                if (!repeatCnt) return removeSection(raw, start, end);
+                
                 const instances = [];
-                const cnt = c.parts.length > RepeatCountPartIndex
-                    ? parseInt(c.parts[RepeatCountPartIndex]) : 1;
-                const [beginIdx, endIdx, domEl] = extractDomEl(raw, c.index);
-                const temp = extractChildMatches(domEl);
-                const childMatches = temp
-                    .reduce((ms, c) => {
-                        const mIdx = matches.findIndex(m => m.raw === c.raw);
-                        if (mIdx > -1) ms.push(matches.splice(mIdx, 1));
-                        return ms;
-                    }, [])
-                    .flat();
-                    
-                for (let i = 0; i < cnt; i++) {
+                const id = getIdFromMatch(c);
+                const hasId = id.length;
+                const childMatches = extractListFromMatches(
+                    matches,
+                    extractChildMatches(domEl));
+                
+                for (let i = 0; i < repeatCnt; i++) {
                     const adjustChild = (cm) => {
                         const newId = `${instanceId}_${getIdFromMatch(cm)}`;
-                        const newChild = dupe(cm, newId);
+                        const newChild = cloneMatch(cm, newId, matches);
     
                         instance = instance.replace(cm.raw, newChild.raw);
                     };
                     const instanceId = `${id}_${i}`;
                     let instance = domEl;
-                    let replace = hasId ? dupe(c, instanceId).raw : '';
+                    let replace = hasId ? cloneMatch(c, instanceId, matches).raw : '';
 
                     childMatches.forEach(cm => adjustChild(cm, instance, instanceId));
                     instances.push(instance.replace(c.raw, replace));
                 }
 
-                raw = `${
-                    raw.slice(0, beginIdx - (beginIdx === 0 ? 0 : 1))}${
-                    instances.join('')}${
-                    raw.slice(endIdx + (endIdx + 1 < raw.length ? 1 : 0))}`;
+                return replaceSection(raw, instances.join(''), start, end);
             };
-            const placeholder = async () => {
-                const replace = await mCtl.placeholder(id);
-                const endIdx = c.index + c.raw.length;
 
-                raw = `${raw.slice(0, c.index)}${replace}${raw.slice(endIdx)}`;
-            };
+            const placeholder = async () =>
+                replaceSection(
+                    raw,
+                    await mCtl.placeholder(getIdFromMatch(c)),
+                    c.index - 1,
+                    c.index + c.raw.length);
+            
             //#endregion Commands
-            const id = getIdFromMatch(c);
+
             const command = getCommandFromMatch(c);
 
             switch (command) {
-                case 'repeat': repeat(); break;
-                case 'placeholder': await placeholder(); break;
+                case 'repeat': raw = repeat(); break;
+                case 'placeholder': raw = await placeholder(); break;
                 
                 default:
+                    console.error('State before interpolation error:', raw);
                     throw new Error(`Unhandled interpolation command (${command})`);
             }
         };
@@ -222,16 +293,16 @@ async function interpolate(mCtl, raw) {
         const setChildId = (container, idx) => {
             const id = `${fullId}_${mCtl.guid}`;
 
-            container[idx] = { [Symbol.for('id')]: id };
+            container[idx] = { [$$.DOMElementId]: id };
             raw = raw.replace(m.raw, `id="${id}"`);
         }
-        const initAndUpdateContext = (key) => {
+        const initAndUpdateContext = key => {
             parent = ctx;            
             parent[key] = parent[key] || {};
             ctx = parent[key];
 
             if (typeof ctx === 'string' && ctx) {
-                ctx = { [Symbol.for('id')]: ctx };
+                ctx = { [$$.DOMElementId]: ctx };
                 parent[key] = ctx;
             }
         };
@@ -244,9 +315,11 @@ async function interpolate(mCtl, raw) {
         const parts = fullId.split('_');
         let name = '', dimensions = [], parent = mCtl, ctx = parent.children;
 
-        while (parts.length) {
+        //#region Walk parts array        
+        while (parts.length) {            
             const part = parts.shift();
             
+            //#region Numeric part
             if (!isNaN(part) && part !== '') {
                 const idx = parseInt(part);
             
@@ -260,7 +333,9 @@ async function interpolate(mCtl, raw) {
                 else setChildId(parent, idx);
                 continue;
             }
+            //#endregion Numeric part
             
+            //#region String part            
             name = part;
 
             if (!name) continue;
@@ -280,16 +355,19 @@ async function interpolate(mCtl, raw) {
             initAndUpdateContext(part);
             unrollDimensions();
             setChildId(parent, lastIdx);
+            //#endregion String part
         }
+        //#endregion Walk parts array
     };
     let matches = extractMatches(raw);
-    let offender;
 
     if (!matches.length) return raw;
     if (!await processCommands()) return await interpolate(mCtl, raw);
     if (!matches.length) return raw;
 
-    if (!idsUnique()) {
+    const offender = firstDuplicateID(matches);
+
+    if (offender) {
         console.error(matches);
         throw new Error(`Duplicate element ID (${offender}) used for interpolation`);
     }
@@ -301,6 +379,10 @@ async function interpolate(mCtl, raw) {
 
     return raw;
 }
+
+//#endregion Interpolation
+
+const Events = ['loaded', 'bound', 'unloaded'];
 
 export default class mControl {
     constructor(ctlPathName, state, container, placeholders, ...events) {
@@ -332,7 +414,8 @@ export default class mControl {
         const getRepeatChildren = () => [...new Set(
             getRepeats(matches)
                 .filter(r => getIdFromMatch(r))
-                .flatMap(r => extractChildMatches(extractDomEl(raw, r.index)[2]))
+                .map(r => findDomEl(raw, r.index)[0])
+                .flatMap(e => extractChildMatches(e))
         )];
 
         if (!this.placeholders.has(id)) return '';
@@ -345,16 +428,12 @@ export default class mControl {
         const resp = await fetch(`/js/map-editor/${ph.path}/${ph.name}.html`);
         const raw = await resp.text();
         const matches = extractMatches(raw);
-        const toRemove = getRepeatChildren();
-
+        
         // TODO: Determine how to handle nested placeholders:
         //extractPlaceholders(matches); // discard?
         
         // extract and discard certain repeat children
-        extractFromMatches(matches, (cmds, c, i) => {
-            if (toRemove.find(r => r.raw === c.raw)) cmds.push(i);
-            return cmds;
-        });
+        extractListFromMatches(matches, getRepeatChildren());
 
         ph.raw = matches.reduce((raw, m) =>
             !m.parts[0].length
@@ -381,7 +460,7 @@ export default class mControl {
 
                 if (c instanceof Object) {
                     ctx[child] = _.merge(
-                        this.container.querySelector(`#${c[Symbol.for('id')]}`),
+                        this.container.querySelector(`#${c[$$.DOMElementId]}`),
                         ctx[child]);
                 }
             }

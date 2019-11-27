@@ -1,3 +1,5 @@
+import $$ from '../common/symbol-store.js';
+
 export default class Compositor {
     constructor() {
         this.layers = [];
@@ -5,7 +7,7 @@ export default class Compositor {
 
     draw(context, camera) {
         this.layers.forEach(async layer =>
-            layer[Symbol.toStringTag] === 'AsyncFunction'
+            $$.isAsync(layer)
                 ? await layer(context, camera)
                 : layer(context, camera));
     }

@@ -1,5 +1,12 @@
-<ul {{testing3:repeat:2}} class="navbar-nav align-self-stretch flex-column">
-    <li {{myLi:repeat:3}} class="nav-item active">
-        <a class="nav-link" href="#">A TOTALLY DIFFERENT MENU!</a>
+<ul class="list-group align-self-stretch flex-column">
+    <li {{:repeat:layerCount}} class="list-group-item">
+        <!-- 
+            on bind(), 
+            set .btn-outline-primary for included, 
+            ...-secondary for excluded
+        -->
+        <label class="btn"> 
+            <input {{display}} type="checkbox" autocomplete="off"> LayerX
+        </label>
     </li>
 </ul>

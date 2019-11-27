@@ -1,5 +1,6 @@
-import { Vec2 } from '../math.js';
+import $$ from '../../common/symbol-store.js';
 import { getElementWithClasses } from '../../common/dom-utilities.js';
+import { Vec2 } from '../math.js';
 
 export function createTileGridLayer(size, tileSize, base) {
     const buffer = getElementWithClasses('canvas', 'screen');
@@ -32,7 +33,7 @@ export function createTileGridLayer(size, tileSize, base) {
         context.restore();
     }
 
-    function redrawOverlay(srcContext, camera) {
+    function redrawOverlay(camera, srcContext) {
         const rowSize = size.x * 4;
         const srcData = srcContext
             .getImageData(0, 0, buffer.width, buffer.height)
@@ -69,8 +70,13 @@ export function createTileGridLayer(size, tileSize, base) {
         context.putImageData(tgtImgData, 0, 0);
     }
 
-    return function drawTileGridLayer(context, camera) {
-        base ? redrawBase(camera) : redrawOverlay(context, camera);
+    const drawFn = base ? redrawBase : redrawOverlay;
+    const layer = function drawTileGridLayer(context, camera) {
+        drawFn(camera, context);
         context.drawImage(buffer, 0, 0);
     };
+
+    layer[$$.SystemFlag] = true;
+
+    return layer;
 }
